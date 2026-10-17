@@ -6,6 +6,46 @@ Create storyboards inside ComfyUI, convert them to MiniMax H3 or Seedance prompt
 
 This is an independent ComfyUI node pack. The standalone [AI Video Storyboard Generator](https://github.com/impacifist/ai-video-storyboard-generator) remains independent. No separate web server is required.
 
+![Storyboard creation panel inside ComfyUI: character inputs on the left and editable shots on the right](docs/images/create.png)
+
+## A walkthrough in four steps
+
+These are actual ComfyUI screenshots from an isolated demo session. The example story uses Korean dialogue with an English interface. Storyboard content comes from the built-in demo template; conversion responses are mocked for UI testing. These screenshots demonstrate the workflow, not the quality of a live AI generation or a finished video.
+
+### 1. Set up your story
+
+Open **Storyboard** in the top action bar, then **API settings** to choose and configure your provider. In **Create**, enter your characters, setting, story direction, target duration and shot count. Add up to five personas, including personality and speaking style. Fields marked **#** are required.
+
+Click **Create a storyboard**, review the shots on the right, and edit them before continuing. **Save and convert** saves a new copy and opens conversion. To explore the interface first, **Load example** fills the form; demo mode uses a template rather than an AI model.
+
+### 2. Convert the approved shots into video prompts
+
+![Conversion panel with saved source storyboard, AI settings and a clip prompt result](docs/images/convert.png)
+
+Choose a saved storyboard and the **MiniMax H3** or **Seedance** guide. Review the selected shots and set your clip lengths; apply the split before generating prompts. For example, three 13-second clips deliver 39 seconds of prompt allocation, even when the source storyboard is 45 seconds—check the split rather than assuming the totals match.
+
+Select the conversion provider and model, approve the request checkbox, then click **Generate video prompts**. Review each result and use TXT, JSON or ZIP export if needed. With Ollama, you can also release the selected LLM after conversion; this does not unload ComfyUI's video models.
+
+### 3. Select the clips you want on the canvas
+
+![Clip prompts tab showing three clips, durations, source shots and connected status](docs/images/clips.png)
+
+In **Clip prompts**, choose the project and conversion version. Search by clip, scene or source shot, expand **Prompt preview**, select clips, then click **Add selected clips as nodes**. Connection status helps distinguish clips already on the canvas. Use **Update matching nodes** explicitly when you want a newer conversion; generating another version does not overwrite existing nodes.
+
+### 4. Connect each prompt to your video workflow
+
+![Three storyboard clip nodes on the ComfyUI canvas, with one prompt output wired to PreviewAny](docs/images/nodes.png)
+
+The screenshot uses **PreviewAny** to demonstrate a real STRING connection without rendering a video. In your workflow, connect each clip's `prompt` output to the corresponding video prompt input. If the destination is a text widget, convert it to an input first when the node supports that option.
+
+| Output | Type | What to connect |
+| --- | --- | --- |
+| `prompt` | STRING | The video node's prompt input or a string-processing node |
+| `duration_seconds` | FLOAT | A compatible duration input, if your video workflow supports one |
+| `clip_id` | STRING | Optional clip labels or other string inputs |
+
+**Choose clip** reassigns an existing node while keeping its wires. Prompt copies travel with the saved workflow, and queue execution does not call the LLM again. Attach character and background reference images to the video-generation nodes separately, in the reference manifest's order. This addon prepares prompts; your video workflow handles rendering and joining clips.
+
 ## Use
 
 1. Open **Storyboard** using the video icon in ComfyUI's top action bar, or **Extensions → Storyboard**. Use the single navigation row: **Create**, **Library**, **Convert**, **Clip prompts**.

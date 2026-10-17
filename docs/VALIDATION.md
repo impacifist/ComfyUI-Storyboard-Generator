@@ -1,6 +1,6 @@
-# Initial implementation validation
+# Public beta validation
 
-2026-10-17. Local source repository: `ComfyUI-Storyboard-Generator`. Initial UI integration was checked on standalone v0.5.1-beta. The shared engine/UI pin is now `c2497b28cc853c9298c03df6fd3f1c567b1840cc` (standalone v0.5.2-beta).
+2026-10-17. Repository: https://github.com/impacifist/ComfyUI-Storyboard-Generator. The shared engine/UI pin is `0734317cb69df1ff83917c37f0c5871a450403f6` (standalone v0.5.4-beta); all 34 imported file checksums were verified before the first release.
 
 | Requirement | Evidence |
 | --- | --- |
@@ -18,8 +18,8 @@
 | Snapshot integrity | Unit tests cover invalid identities/durations, altered content, disallowed fields, deleted source project and distinct conversion hashes. |
 | Upstream integrity | Every vendored file matches its pinned manifest checksum. |
 
-Commands: `python -m unittest discover -s tests -p "test_*.py" -q` (13 passed, including the updated engine's LM Studio unlimited socket wait), `python -m ruff check .` (passed), `node --check web/storyboard.js`, `node --check panel/bridge.js` (passed), and `python tools/test_comfy.py --comfy <installed-comfy> --python <embedded-python>` (passed on the initial integration build; not repeated for the four-line upstream timeout change).
+Commands: `python -m unittest discover -s tests -p "test_*.py" -q` (21 passed), `ruff check .` (passed), and `node --check` for `web/storyboard.js`, `panel/bridge.js` and `panel/workbench.js` (passed). `python tools/test_comfy.py --comfy <installed-comfy> --python <embedded-python>` passed before release and again when capturing README screenshots. The browser check covers desktop/mobile, three UI languages, creation, clip search, deduplication, explicit updates, preserved wires, workflow reload, real STRING queue execution and mocked Ollama unload requests.
 
-The real ComfyUI test used temporary user/input/output directories and only this node pack. It did not restart the existing server, use its settings/library, generate images/video or call paid AI. Screenshots and sample workflow are diagnostic artifacts in ignored `storage/browser-check/`, not public release files.
+The real ComfyUI test used temporary user/input/output directories and only this node pack. It did not restart the existing server, use its settings/library, generate images/video or call paid AI. Storyboards use the built-in demo template and conversion responses are mocked. Selected screenshots are published under `docs/images/`; raw logs and diagnostic artifacts remain ignored under `storage/browser-check/`.
 
-Local installation is a directory junction from the user's ComfyUI `custom_nodes/ComfyUI-Storyboard-Generator` to this source repository. The already-running ComfyUI server must be restarted by the user to discover it. No public repository or release has been published as part of this implementation.
+The first public prerelease is `v0.1.0-beta`. Installation requires restarting ComfyUI and refreshing the browser. These checks establish UI and integration behavior, not AI output quality, real Ollama VRAM release or compatibility with every ComfyUI version.

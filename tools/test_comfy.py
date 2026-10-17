@@ -31,7 +31,7 @@ def main(comfy, python):
         data = runtime / "user/storyboard-generator"
         service.configure(data)
         doc = document()
-        doc["brief"]["title"] = "Subway conversation — smoke sample"
+        doc["brief"]["title"] = "After-school conversation — demo"
         doc["brief"]["duration"] = 45
         for shot in doc["story"]["shots"]:
             shot["duration"] = 7.5
@@ -121,6 +121,20 @@ def main(comfy, python):
                         assert page.evaluate("testApp.graph._nodes.find(n => n.type === 'StoryboardClipPrompt').outputs[0].links.length") == 1
                         page.screenshot(path=str(artifacts / "clips-desktop.png"))
                         page.get_by_role("button", name="Close", exact=True).click()
+                        page.evaluate("""() => {
+                          const clips = testApp.graph._nodes.filter(n => n.type === 'StoryboardClipPrompt');
+                          clips.forEach((node, index) => { node.pos = [100 + index * 410, 250]; });
+                          const sink = testApp.graph._nodes.find(n => n.type === 'PreviewAny');
+                          sink.pos = [570, 570]; sink.size = [360, 150];
+                          for (const group of testApp.graph._groups) {
+                            group.pos = [70, 180]; group.size = [1210, 270];
+                          }
+                          testApp.canvas.ds.scale = 1;
+                          testApp.canvas.ds.offset = [70, 30];
+                          testApp.canvas.setDirty(true, true);
+                        }""")
+                        page.wait_for_timeout(400)
+                        page.screenshot(path=str(artifacts / "nodes-desktop.png"))
                         page.evaluate("async () => { await testApp.loadGraphData(window.savedWorkflow); }")
                         assert page.evaluate("testApp.graph._nodes.find(n => n.type === 'StoryboardClipPrompt').widgets.find(w => w.name === 'clip_data').value") == first_value
                         awaitable = page.request.post(base + "/prompt", data={"prompt": {
