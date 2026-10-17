@@ -11,6 +11,8 @@ PROFILES = {
     "seedance-2-reference": ("Seedance 2.0", "reference", "seedance-2.0.md"),
     "minimax-h3-text": ("MiniMax H3", "text", "minimax-h3.md"),
     "minimax-h3-reference": ("MiniMax H3", "reference", "minimax-h3.md"),
+    "ltx-2.5-text": ("LTX 2.5", "text", "ltx-2.5.md"),
+    "ltx-2.5-image": ("LTX 2.5", "image", "ltx-2.5.md"),
 }
 
 
@@ -32,7 +34,15 @@ def profile(key):
     target, mode, filename = PROFILES[key]
     guide = (ROOT / filename).read_text(encoding="utf-8")
     system = (ROOT / "compiler-system.md").read_text(encoding="utf-8").split("\n", 2)[2]
-    if key.startswith("seedance"):
+    if key.startswith("ltx"):
+        sections = []
+        system += "\n" + (ROOT / "ltx-system.md").read_text(encoding="utf-8")
+        if mode == "image":
+            system += ("\nIMAGE-TO-VIDEO: The user supplies each clip's opening frame in the video workflow. "
+                       "No image has been analyzed here. Focus on approved motion, camera and audio starting "
+                       "from that frame. Do not invent its visual contents or attachment labels. "
+                       "Retain intentional source cuts; never add a cut merely because a clip starts.")
+    elif key.startswith("seedance"):
         system += "\nUse Image N attachment labels. Describe camera, actions and continuity. " \
                   "The renderer supplies {dialogue}; you may describe <sound effects> and (music) without spoken words."
         sections = []
@@ -55,7 +65,8 @@ def profile(key):
     system += "\n" + assembly_rules()
     return {"id": key, "target_model": target, "mode": mode, "guide": guide,
             "guide_source": "\n".join(line[2:] for line in guide.splitlines() if line.startswith("- https://")),
-            "system_prompt": system, "checked_at": "2026-10-11" if key.startswith("minimax") else "2026-10-10",
+            "system_prompt": system, "checked_at": ("2026-10-18" if key.startswith("ltx") else
+                "2026-10-11" if key.startswith("minimax") else "2026-10-10"),
             "min_seconds": 4, "max_seconds": 15,
             "max_images": 9 if mode == "reference" else 0, "sections": sections,
             "sha256": hashlib.sha256((guide + system).encode()).hexdigest()}

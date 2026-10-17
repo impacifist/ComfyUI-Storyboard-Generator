@@ -2,17 +2,23 @@
 
 English | [한국어](README.ko.md) | [日本語](README.ja.md)
 
-Create storyboards inside ComfyUI, convert them to MiniMax H3 or Seedance prompts, and connect each clip as a separate **STRING** output.
+Create storyboards inside ComfyUI, convert them to MiniMax H3, Seedance or LTX 2.5 prompts, and connect each clip as a separate **STRING** output.
 
 This is an independent ComfyUI node pack. The standalone [AI Video Storyboard Generator](https://github.com/impacifist/ai-video-storyboard-generator) remains independent. No separate web server is required.
 
 ![English storyboard creation panel inside ComfyUI with an English example](docs/images/create-en.png)
 
+## LTX 2.5 and dark-theme fixes
+
+Convert now includes **LTX 2.5** with **Text → video** and **Starting image → video** modes. The pinned [official-source summary](_vendor/docs/guides/ltx-2.5.md) and [compiler policy](_vendor/docs/guides/ltx-system.md) render chronological English prose with quoted original dialogue. Copy individual clips or add them as STRING nodes as usual.
+
+Connect each clip's opening image separately in the LTX video workflow; the panel does not analyze or transfer it. The current planner range is 4–15 seconds, not LTX's maximum duration. Configure frames/FPS in the video workflow and disable Prompt Enhance to test the exact prompt. Library surfaces, preview dialogs and conversion guide/output panes now use matching dark backgrounds and readable text. Conversion tests use mocked AI; actual LTX video quality is not verified.
+
 ## A walkthrough in four steps
 
 These are actual ComfyUI screenshots from an isolated demo session, with an English interface and an authored English story. Conversion responses are mocked for UI testing. These screenshots demonstrate the workflow, not the quality of a live AI generation or a finished video. Each language guide has its own matching interface and example.
 
-**v0.1.1-beta:** each converted clip now has a **Copy prompt** button, available even when the clip is collapsed. It copies only that clip's prompt body, including its dialogue. All-clips TXT/JSON/ZIP exports remain available.
+**v0.1.2-beta:** adds LTX 2.5 conversion and corrects dark-theme contrast. Each converted clip has a **Copy prompt** button, available even when collapsed. It copies only that clip's prompt body, including its dialogue. All-clips TXT/JSON/ZIP exports remain available.
 
 ### 1. Set up your story
 
@@ -28,7 +34,7 @@ To open the exact English example shown here, import the [English sample JSON](e
 
 ![English conversion panel with source storyboard, AI settings and per-clip copy buttons](docs/images/convert-en.png)
 
-Choose a saved storyboard and the **MiniMax H3** or **Seedance** guide. Review the selected shots and set your clip lengths; apply the split before generating prompts. This example uses a 30-second story split into two 15-second clips. Manual clip lengths can change the total, so review the split before conversion.
+Choose a saved storyboard and the **MiniMax H3**, **Seedance** or **LTX 2.5** guide. Review the selected shots and set your clip lengths; apply the split before generating prompts. This example uses a 30-second story split into two 15-second clips. Manual clip lengths can change the total, so review the split before conversion.
 
 Select the conversion provider and model, approve the request checkbox, then click **Generate video prompts**. Review each result and use TXT, JSON or ZIP export if needed. With Ollama, you can also release the selected LLM after conversion; this does not unload ComfyUI's video models.
 
@@ -56,7 +62,7 @@ The screenshot uses **PreviewAny** to demonstrate a real STRING connection witho
 
 1. Open **Storyboard** using the video icon in ComfyUI's top action bar, or **Extensions → Storyboard**. Use the single navigation row: **Create**, **Library**, **Convert**, **Clip prompts**.
 2. In **Create**, configure your AI provider, enter 1–5 personas and the scene, then generate or import a storyboard. Inputs are on the left and editable results on the right. **Create a storyboard** stays in the bottom action bar. Edit and lock shots as needed; **Save and convert** saves a new library copy and opens it for conversion.
-3. In **Convert**, choose the MiniMax H3 or Seedance guide, suggest clip lengths or apply a split, and edit individual clip durations. **Generate video prompts** stays in the bottom action bar. Source shots, references and Ollama memory settings fold away; open them when needed. TXT/JSON/ZIP exports remain available. The ComfyUI workbench follows the installed prompt writer's dark input/output layout; [design notes](docs/DESIGN_COMFYUI.md).
+3. In **Convert**, choose the MiniMax H3, Seedance or LTX 2.5 guide, suggest clip lengths or apply a split, and edit individual clip durations. **Generate video prompts** stays in the bottom action bar. Source shots, references and Ollama memory settings fold away; open them when needed. TXT/JSON/ZIP exports remain available. The ComfyUI workbench follows the installed prompt writer's dark input/output layout; [design notes](docs/DESIGN_COMFYUI.md).
 4. Open **Clip prompts**. Choose the project and conversion version, search by clip/scene/source shot, and preview the prompts.
 5. Select clips and click **Add selected clips as nodes**. Each node exposes `prompt` (STRING), `duration_seconds` (FLOAT) and `clip_id` (STRING). Connect `prompt` directly to a compatible text input on a video node or a string-processing node. Text-only widgets need to support conversion to inputs before a wire can be attached.
 
@@ -100,7 +106,7 @@ The Studio and wrapper support English, Korean and Japanese. Prompt directions a
 
 ## Shared engine
 
-The engine and Studio assets are an unmodified, pinned snapshot of upstream v0.5.5-beta, not a separately maintained fork. `_vendor/upstream.json` records the full commit and SHA-256 of every imported file. ComfyUI integration lives outside `_vendor`. Loopback LLM requests have no application socket timeout; a model may take more than three minutes to return its first response. Local output budgets and session diagnostics are available in the embedded Studio.
+The engine and Studio assets are an unmodified, pinned snapshot of upstream v0.5.6-beta, not a separately maintained fork. `_vendor/upstream.json` records the full commit and SHA-256 of every imported file. ComfyUI integration lives outside `_vendor`. Loopback LLM requests have no application socket timeout; a model may take more than three minutes to return its first response. Local output budgets and session diagnostics are available in the embedded Studio.
 
 The upstream application does not yet publish an installable engine package. This snapshot permits independent installation without downloading code at runtime or requiring the standalone server. A shared versioned Python package can replace it later.
 

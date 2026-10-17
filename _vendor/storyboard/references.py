@@ -76,6 +76,7 @@ def manifest(board_id, selection, profile=None):
     if not isinstance(selection, list) or len(selection) > 9:
         raise ValidationError("캐릭터와 배경 참조 이미지는 합쳐서 9장 이내로 선택해주세요.")
     if profile and ((profile["mode"] == "text" and selection)
+                    or (profile["mode"] == "image" and selection)
                     or (profile["mode"] == "reference" and not selection)):
         raise ValidationError("이미지 사용 여부에 맞는 가이드를 선택해주세요.")
     result, seen = [], set()

@@ -159,6 +159,73 @@ def h3_reference_labels(draft, assets):
     return normalize(draft)
 
 
+def ltx_prompt(generated, clip, layout, draft, names, cameras):
+    """Render LTX prose without timing tables, attachment tokens or internal IDs."""
+    labels = {key: re.sub(r" \[[A-Za-z0-9_-]+\]$", "", value) for key, value in names.items()}
+    boundaries = {item["id"]: item["state"] for item in draft["boundaries"]}
+    bridges = {item["id"]: item for item in draft["handoffs"]}
+
+    def state_text(key):
+        state = boundaries[key]
+        parts = [f"{labels[c['character_id']]} is {c['position']}, {c['pose']}, "
+                 f"looking {c['gaze']}, with {c['emotion']}." for c in state["characters"]]
+        parts += [f"The {p['english_name']} is {p['position']}"
+                  + (f", held by {labels[p['holder']]}" if p['holder'] else ", unheld") + "."
+                  for p in state["props"]]
+        return " ".join(parts)
+
+    def sentence(value):
+        return value.rstrip(" .") + "."
+
+    parts = [sentence(generated["context"])]
+    incoming = next((h for h in layout.get("handoffs", []) if h["to_clip"] == clip["id"]), None)
+    outgoing = next((h for h in layout.get("handoffs", []) if h["from_clip"] == clip["id"]), None)
+    if incoming:
+        bridge = bridges[incoming["id"]]
+        parts.extend([sentence(bridge["bridge"]), sentence(bridge["sound_bridge"])])
+    for index, (directed, planned) in enumerate(zip(generated["shots"], clip["shots"])):
+        camera = cameras[planned["id"]]
+        if index:
+            previous = clip["shots"][index - 1]
+            parts.append("The preceding view transitions as follows: "
+                         + sentence(cameras[previous["id"]]["transition"]))
+            if generated["overall_soundscape"].strip() not in ("", "N/A"):
+                parts.append("Across the edit, the sound follows this scene's audio direction: "
+                             + sentence(generated["overall_soundscape"]))
+        if planned.get("continues_from_previous"):
+            parts.append("The same view and ongoing camera motion continue without a cut or replay.")
+        parts.append(f"The view uses {camera['size']}, from {camera['angle']}, "
+                     f"with {camera['movement'].rstrip(' .')}.")
+        parts.append(sentence(directed["camera"]["layout"]))
+        if planned.get("entry_boundary_id"):
+            parts.append("The ongoing action starts in this state: " + state_text(planned["entry_boundary_id"]))
+        parts.append(sentence(directed["direction"]))
+        for line_index, line in enumerate(planned["source"]["dialogue"]):
+            if not line["text"]:
+                continue
+            parts.append(sentence(directed["speech_cues"][line_index]))
+            delivery = directed["deliveries"][line_index]
+            parts.append(f"{labels[line['speaker']]} says in {language(line['text'], directed['dialogue_language'])}"
+                         + (f", {delivery.rstrip(' .')}" if delivery else "") + f': "{line["text"]}"')
+        if planned.get("exit_boundary_id"):
+            parts.append("The action continues through this state: " + state_text(planned["exit_boundary_id"]))
+    if "content_duration" in clip:
+        parts.append(f"After the approved action, hold the final frame for "
+                     f"{clip['duration'] - clip['content_duration']:g} seconds without new speech or action.")
+    if outgoing:
+        bridge = bridges[outgoing["id"]]
+        parts.extend([sentence(bridge["bridge"]), sentence(bridge["sound_bridge"])])
+        if outgoing["kind"] != "scene_change":
+            parts.append("The ongoing performance carries forward without an added pause, fade or camera reset.")
+    elif not clip["shots"][-1].get("continues_in_next"):
+        parts.append("The final view concludes as follows: " + sentence(cameras[clip["shots"][-1]["id"]]["transition"]))
+    for label, key in (("The ambient sound is", "overall_soundscape"), ("The non-diegetic music is", "non_diegetic_music")):
+        value = generated[key].strip()
+        if value and value != "N/A":
+            parts.append(label + " " + sentence(value))
+    return " ".join(parts)
+
+
 def assemble(document, layout, draft, profile, assets):
     validate(draft, DIRECTOR_OUTPUT, "director_output")
     if profile and profile["id"].startswith("minimax"):
@@ -205,6 +272,7 @@ def assemble(document, layout, draft, profile, assets):
         boundaries[boundary["id"]] = " | ".join(descriptions)
     h3 = bool(profile and profile["id"].startswith("minimax"))
     seedance = bool(profile and profile["id"].startswith("seedance"))
+    ltx = bool(profile and profile["id"].startswith("ltx"))
     # A time split is not a second camera design. Bind each source shot once;
     # composition notes may evolve with the segment's continuing performance.
     cameras = {}
@@ -241,6 +309,9 @@ def assemble(document, layout, draft, profile, assets):
         # Explicit dialogue syntax is owned by this renderer, never the model.
         if any(re.search(r"</?d>|\(S\d+\)|\{[^{}]*\}", text) for text in fragments):
             raise ValidationError("AI 연출에 대사 문법이 포함되었습니다. 대사는 프로그램이 삽입해야 합니다.")
+        if ltx and any(re.search(r"\[Shot\b|<Subject\s|\b\d{2}:\d{2}\.\d{3}\b", text, re.IGNORECASE)
+                       for text in fragments):
+            raise ValidationError("LTX direction fields require prose without shot tags or timestamp syntax.")
         if profile:
             allowed = {a["label"] for a in assets}
             used = [label for text in fragments for label in re.findall(r"<Picture \d+>|\bImage \d+\b", text)]
@@ -344,7 +415,9 @@ def assemble(document, layout, draft, profile, assets):
             identity = f"<Subject {character_index}> " if h3 else ""
             refs.append(f"{identity}{names[item['character_id']]} — {item['label']}; "
                         f"reference role: {item['role']}. {translated['note']}")
-        if h3:
+        if ltx:
+            prompt = ltx_prompt(generated, clip, layout, draft, names, cameras)
+        elif h3:
             values = {"subject_definitions": "\n".join(refs + [generated["subject_definitions"]]),
                       "summary": generated["summary"], "retention_analysis": generated["retention_analysis"],
                       "detailed_description": description, "integrated_multimodal_description": description,

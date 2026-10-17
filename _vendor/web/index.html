@@ -62,7 +62,8 @@
           <div class="conversion-settings">
           <section class="conversion-settings-section"><h3>영상 설정</h3>
           <p class="helper">영상 지시문은 영어로, 대사는 원문 그대로 출력합니다.</p>
-          <div class="form-grid"><label>영상 모델<select id="video-family"><option value="seedance">Seedance 2.0</option><option value="minimax">MiniMax H3</option><option value="custom">직접 입력 · 고급</option></select></label><label>공식 가이드 · 입력 방식<select id="video-guide"><option value="text">텍스트 → 영상</option><option value="reference">캐릭터 이미지 참조 → 영상</option></select></label></div>
+          <div class="form-grid"><label>영상 모델<select id="video-family"><option value="seedance">Seedance 2.0</option><option value="minimax">MiniMax H3</option><option value="ltx">LTX 2.5</option><option value="custom">직접 입력 · 고급</option></select></label><label>공식 가이드 · 입력 방식<select id="video-guide"><option value="text">텍스트 → 영상</option><option value="reference">캐릭터 이미지 참조 → 영상</option><option value="image" hidden disabled>시작 이미지 → 영상</option></select></label></div>
+          <p id="ltx-image-help" class="helper" hidden>각 클립의 시작 이미지는 영상 제작 워크플로우에서 직접 연결하세요. 여기서는 이미지를 분석하거나 LTX 노드로 전송하지 않습니다. 정확한 프롬프트를 사용하려면 LTX의 Prompt Enhance를 끄세요.</p>
           <p id="official-guide-status" class="helper" role="status"></p>
           <div id="custom-guide-fields" hidden><label>대상 영상 모델 · 정확한 버전<input id="target-model" maxlength="200" placeholder="사용할 영상 모델과 버전"></label><label>프롬프트 가이드 출처<input id="guide-source" maxlength="2048" placeholder="공식 문서 주소 또는 가이드 이름·버전"></label><label>모델의 프롬프트 가이드<textarea id="conversion-guide" rows="7" maxlength="20000" placeholder="해당 모델과 입력 방식에 맞는 가이드 본문을 입력하세요. 주소만으로 자동 수집하지 않습니다."></textarea></label></div>
           </section>

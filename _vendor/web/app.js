@@ -863,13 +863,18 @@ function updateConversionAI() {
   if (!$("#conversion-ai-model").value) $("#conversion-ai-model").closest("details").open = true;
 }
 
+function selectedGuideId() {
+  const family = $("#video-family").value;
+  return family === "custom" ? null : `${({minimax: "minimax-h3", seedance: "seedance-2", ltx: "ltx-2.5"})[family]}-${$("#video-guide").value}`;
+}
+
 function conversionPayload() {
   if (!conversionBoardId) throw new Error(tr("변환할 콘티를 선택해주세요."));
   return {id: conversionBoardId,
     selected: [...document.querySelectorAll("#conversion-shots input:checked")].map((node) => node.value),
     limit: Number($("#clip-limit").value), split_mode: $("#split-mode").value, clip_durations: clipLengths, target_model: $("#target-model").value.trim(),
     guide_source: $("#guide-source").value.trim(), guide: $("#conversion-guide").value.trim(),
-    guide_id: $("#video-family").value === "custom" ? null : `${$("#video-family").value === "minimax" ? "minimax-h3" : "seedance-2"}-${$("#video-guide").value}`,
+    guide_id: selectedGuideId(),
     references: $("#video-family").value !== "custom" && $("#video-guide").value === "reference" ? referenceItems : []};
 }
 
@@ -1209,6 +1214,10 @@ function guideSourceTitle(url) {
     "storyboard-guidelines.md": "MiniMax H3 · 스토리보드 연출 지침",
     "model-selection.md": "MiniMax H3 · 모델 선택 안내",
     "qc-checklist.md": "MiniMax H3 · 품질 검수 목록",
+    "prompting-guide": "LTX · 프롬프트 작성 지침",
+    "ltx-2-5-prompt-guide": "LTX 2.5 · 공식 프롬프트 가이드",
+    "image-to-video": "LTX · 시작 이미지 기반 영상",
+    "text-to-video": "LTX · 텍스트 기반 영상",
   };
   const source = new URL(url);
   const filename = source.pathname.split("/").filter(Boolean).pop();
@@ -1218,18 +1227,25 @@ function guideSourceTitle(url) {
 function applyGuide(reset = true) {
   const family = $("#video-family").value;
   const custom = family === "custom";
+  const ltx = family === "ltx";
+  for (const option of $("#video-guide").options) {
+    option.hidden = (option.value === "reference" && ltx) || (option.value === "image" && !ltx);
+    option.disabled = option.hidden;
+  }
+  if ($("#video-guide").selectedOptions[0]?.disabled) $("#video-guide").value = "text";
+  $("#ltx-image-help").hidden = !ltx || $("#video-guide").value !== "image";
   $("#clip-limit").min = custom ? "1" : "4";
   $("#clip-limit").step = custom ? "0.1" : "1";
   $("#custom-guide-fields").hidden = !custom;
   $("#official-guide-preview").hidden = custom;
-  $("#reference-panel").hidden = custom || $("#video-guide").value === "text";
+  $("#reference-panel").hidden = custom || $("#video-guide").value !== "reference";
   $("#video-guide").closest("label").hidden = custom;
   for (const selector of ["#target-model", "#guide-source", "#conversion-guide"]) $(selector).readOnly = !custom;
   if (custom) {
     $("#official-guide-status").textContent = tr("직접 입력 가이드는 공식 규칙의 자동 검사를 제공하지 않습니다.");
     if (reset) for (const selector of ["#target-model", "#guide-source", "#conversion-guide"]) $(selector).value = "";
   } else {
-    const id = `${family === "minimax" ? "minimax-h3" : "seedance-2"}-${$("#video-guide").value}`;
+    const id = selectedGuideId();
     const guide = guideCatalog.find((g) => g.id === id);
     if (!guide) return;
     $("#target-model").value = guide.target_model;
@@ -1237,7 +1253,9 @@ function applyGuide(reset = true) {
     $("#conversion-guide").value = guide.guide;
     $("#official-guide-body").textContent = guide.guide;
     $("#official-system-body").textContent = guide.system_prompt;
-    $("#official-guide-status").textContent = tr("공식 자료 확인: {0} · 정수 4~15초 · 참조 이미지 최대 {1}장", {0: guide.checked_at, 1: guide.max_images});
+    $("#official-guide-status").textContent = ltx
+      ? tr("공식 자료 확인: {0} · 현재 분할 범위 4~15초 · LTX 모델의 최대 길이가 아닙니다.", {0: guide.checked_at})
+      : tr("공식 자료 확인: {0} · 정수 4~15초 · 참조 이미지 최대 {1}장", {0: guide.checked_at, 1: guide.max_images});
     $("#official-guide-links").replaceChildren();
     for (const url of [...new Set(guide.guide_source.split("\n").map((value) => value.trim()).filter(Boolean))]) {
       const link = el("a", "guide-link", guideSourceTitle(url)); link.href = url; link.target = "_blank"; link.rel = "noopener noreferrer";

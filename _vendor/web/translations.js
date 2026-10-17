@@ -36,6 +36,13 @@ window.UI_KOREAN = {
 
 // UI copy only. Never apply this catalog to persona, dialogue, or prompt content.
 window.UI_MESSAGES = {
+  "LTX · 프롬프트 작성 지침": ["LTX · Prompting documentation", "LTX · プロンプト作成の手引き"],
+  "LTX 2.5 · 공식 프롬프트 가이드": ["LTX 2.5 · Official prompt guide", "LTX 2.5 · 公式プロンプトガイド"],
+  "LTX · 시작 이미지 기반 영상": ["LTX · Image-to-video workflow", "LTX · 開始画像からの動画生成"],
+  "LTX · 텍스트 기반 영상": ["LTX · Text-to-video workflow", "LTX · テキストからの動画生成"],
+  "시작 이미지 → 영상": ["Starting image → video", "開始画像 → 動画"],
+  "공식 자료 확인: {0} · 현재 분할 범위 4~15초 · LTX 모델의 최대 길이가 아닙니다.": ["Official sources reviewed: {0} · Current planner range: 4–15s; this is not LTX's maximum duration.", "公式資料の確認日：{0} · 現在の分割範囲は4〜15秒です。LTXの生成上限ではありません。"],
+  "각 클립의 시작 이미지는 영상 제작 워크플로우에서 직접 연결하세요. 여기서는 이미지를 분석하거나 LTX 노드로 전송하지 않습니다. 정확한 프롬프트를 사용하려면 LTX의 Prompt Enhance를 끄세요.": ["Connect each clip's starting image in your video workflow. Images are not analyzed or sent to LTX nodes here. Turn off LTX's Prompt Enhance to use the exact generated prompt.", "各クリップの開始画像は動画生成ワークフローで接続してください。ここでは画像の解析やLTXノードへの送信は行いません。生成したプロンプトをそのまま使うには、LTXのPrompt Enhanceをオフにしてください。"],
   "프롬프트 복사": ["Copy prompt", "プロンプトをコピー"],
   "{0} 프롬프트 복사": ["Copy {0} prompt", "{0}のプロンプトをコピー"],
   "복사했습니다.": ["Copied.", "コピーしました。"],

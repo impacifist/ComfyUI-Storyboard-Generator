@@ -1,5 +1,13 @@
 # Public beta validation
 
+## v0.1.2-beta
+
+The LTX update pins standalone v0.5.6-beta at `5f10f8694c7340ac2305ea6d4522afe39f2893fe` (36 vendor hashes). Addon unit tests now include both LTX modes reaching portable STRING snapshots without extra AI calls. The shared engine checks quoted original dialogue, English-only prose, rejection of foreign model syntax, split-source camera continuity, image-mode attachment rejection and policy hashing.
+
+`tools/test_comfy.py` now uses LTX prompts in its real STRING queue check. It inspects computed dark surface colors and at least 4.5:1 text contrast in library controls, preview dialogs, conversion settings, guide/system text and prompt output, then checks LTX image-mode payloads and actual clipboard contents. The test uses its own temporary CPU-only server, mocked AI and mocked Ollama unload; no live server or user's video job is changed. Actual video generation quality is outside these checks.
+
+## Previous release evidence
+
 2026-10-18. Repository: https://github.com/impacifist/ComfyUI-Storyboard-Generator. The v0.1.1-beta engine/UI pin is `ebf8ef3b3f34e7f26fab26c7ea173c9f4fb84d57` (standalone v0.5.5-beta). The fixed 34-file snapshot is imported with `tools/sync_upstream.py`.
 
 For v0.1.1-beta, 21 unit tests, Ruff and JavaScript syntax checks passed. `tools/capture_showcase.py` checks actual clipboard contents for both clips (including a collapsed clip) inside the embedded Studio in each of English, Korean and Japanese. It captures five matching-language screenshots per language and connects two saved prompt nodes to PreviewAny in an isolated CPU-only ComfyUI. Examples are authored; AI conversions are mocked and no images or videos are generated. The earlier integration checks below describe the initial implementation.

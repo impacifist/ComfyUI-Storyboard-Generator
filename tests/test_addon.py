@@ -52,6 +52,20 @@ class AddonTests(unittest.TestCase):
         self.assertNotEqual(one["clips"][0]["revision"], two["clips"][0]["revision"])
         self.assertEqual(service.dispatch("/bundle/" + first["id"]), one)
 
+    def test_ltx_modes_reach_portable_string_nodes_without_extra_ai_calls(self):
+        for mode in ("text", "image"):
+            self.payload["guide_id"] = f"ltx-2.5-{mode}"
+            compiled = self.compile()
+            bundle = service.dispatch("/bundle/" + compiled["id"])
+            for clip in bundle["clips"]:
+                self.assertEqual(clip["target_model"], "LTX 2.5")
+                self.assertNotIn("[Shot", clip["prompt"])
+                self.assertNotIn("<d>", clip["prompt"])
+                snapshot = clip_snapshot.encode_snapshot(clip)
+                with patch.object(service.providers, "generate_json", side_effect=AssertionError("No extra AI")):
+                    self.assertEqual(nodes.StoryboardClipPrompt().output_clip(snapshot),
+                                     (clip["prompt"], float(clip["duration"]), clip["clip_id"]))
+
     def test_catalog_excludes_prompts_provider_settings_and_credentials(self):
         self.compile()
         value = service.dispatch("/catalog")

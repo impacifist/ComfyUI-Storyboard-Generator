@@ -94,6 +94,22 @@ body.comfy-workbench { font: 13px/1.55 "Segoe UI", "Malgun Gothic", system-ui, s
 .comfy-workbench .notice.error, .comfy-workbench .error-text { color: #ffaaa3; }
 .comfy-workbench dialog { color: var(--ink); background: var(--paper); }
 .comfy-workbench dialog::backdrop { background: #07090dcc; }
+/* Match the shared app's ID-level specificity; class-only overrides lose here. */
+.comfy-workbench #library-items { background: var(--paper); border-color: var(--line); }
+.comfy-workbench .library-toolbar :is(input, select) { background: #111419; color: var(--ink); }
+.comfy-workbench .library-symbol { background: #232832; border-color: var(--line); color: #e7a07e; }
+.comfy-workbench :is(.library-shot-count, .library-duration),
+.comfy-workbench .library-toolbar label { color: #c5cad4; }
+.comfy-workbench #official-guide-preview .prompt-output,
+.comfy-workbench .prompt-clip .prompt-output { background: #111419; color: var(--ink); }
+.comfy-workbench .conversion-source-bar :is(h2, h3, p, strong),
+.comfy-workbench #conversion-view :is(.source-overview, .source-shot) { color: var(--ink); }
+.comfy-workbench :is(.conversion-notes, .plan-notes) { background: #30291e; color: #edbc7c; }
+.comfy-workbench .guide-link { color: #f1c3aa; }
+.comfy-workbench #conversion-view #official-guide-preview > summary,
+.comfy-workbench .conversion-advanced > summary,
+.comfy-workbench .result-metadata > summary { color: #c5cad4; }
+.comfy-workbench dialog { color-scheme: dark; border-color: var(--line); }
 .comfy-workbench .language-menu { color: var(--ink); background: var(--paper); border-color: var(--line); }
 .comfy-workbench .language-menu button { color: var(--ink); }
 .comfy-workbench .language-menu button:hover { background: #2c323c; }

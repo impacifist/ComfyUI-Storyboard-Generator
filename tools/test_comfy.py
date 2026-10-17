@@ -27,7 +27,7 @@ def main(comfy, python):
         runtime = temporary / "runtime"
         runtime.mkdir()
         plugin = runtime / "custom_nodes/ComfyUI-Storyboard-Generator"
-        shutil.copytree(ROOT, plugin, ignore=shutil.ignore_patterns(".git", "storage", "output", "__pycache__", ".ruff_cache", ".env", ".local-secrets", ".venv"))
+        shutil.copytree(ROOT, plugin, ignore=shutil.ignore_patterns(".git", "storage", "output", "dist", "__pycache__", ".ruff_cache", ".env", ".env.*", ".local-secrets", ".venv"))
         data = runtime / "user/storyboard-generator"
         service.configure(data)
         doc = document()
@@ -37,7 +37,7 @@ def main(comfy, python):
             shot["duration"] = 7.5
         board = service.library.save(doc)["id"]
         payload = {"id": board, "selected": [s["id"] for s in doc["story"]["shots"]], "split_mode": "auto", "limit": 15,
-                   "clip_durations": {"C01": 13, "C02": 13, "C03": 13}, "guide_id": "minimax-h3-text", "provider": "openai", "model": "mock"}
+                   "clip_durations": {"C01": 13, "C02": 13, "C03": 13}, "guide_id": "ltx-2.5-text", "provider": "openai", "model": "mock"}
         with patch.object(service.providers, "generate_json", side_effect=fake_ai):
             first = service.dispatch("/conversion/compile", payload)
             second = service.dispatch("/conversion/compile", payload)
@@ -69,6 +69,7 @@ def main(comfy, python):
                 with sync_playwright() as playwright:
                     browser = playwright.chromium.launch()
                     page = browser.new_page(viewport={"width": 1600, "height": 1050})
+                    page.context.grant_permissions(["clipboard-read", "clipboard-write"])
                     errors = []
                     page.on("pageerror", lambda error: errors.append(str(error)))
                     try:
@@ -82,6 +83,24 @@ def main(comfy, python):
                         expect(page.locator("#storyboard-panel")).to_be_visible()
                         studio = page.frame_locator(".sg-studio")
                         expect(studio.locator("#brief-form")).to_be_visible()
+                        frame = page.locator(".sg-studio").element_handle().content_frame()
+                        frame.wait_for_function("document.readyState === 'complete' && typeof busy !== 'undefined' && !busy")
+
+                        def dark_surface(selector):
+                            style = studio.locator(selector).first.evaluate("""node => {
+                              const style = getComputedStyle(node);
+                              let surface = node;
+                              while (surface.parentElement && getComputedStyle(surface).backgroundColor === 'rgba(0, 0, 0, 0)') surface = surface.parentElement;
+                              return {bg: getComputedStyle(surface).backgroundColor, ink: style.color};
+                            }""")
+                            import re
+                            colors = {key: [int(n) / 255 for n in re.findall(r'\d+', value)[:3]] for key, value in style.items()}
+                            assert len(colors["bg"]) == 3 and max(colors["bg"]) < .3, (selector, style)
+                            def luminance(rgb):
+                                values = [v / 12.92 if v <= .04045 else ((v + .055) / 1.055) ** 2.4 for v in rgb]
+                                return sum(v * weight for v, weight in zip(values, (.2126, .7152, .0722)))
+                            light, dark = sorted([luminance(colors["ink"]), luminance(colors["bg"])], reverse=True)
+                            assert (light + .05) / (dark + .05) >= 4.5, (selector, style)
                         studio.locator("#example").click()
                         studio.locator("#generate").click()
                         expect(studio.locator("#shots .shot")).to_have_count(6)
@@ -90,6 +109,15 @@ def main(comfy, python):
                         studio.locator("#workbench-next").click()
                         expect(studio.locator("#conversion-controls")).to_be_visible()
                         expect(page.locator("#sg-convert-tab")).to_have_attribute("aria-selected", "true")
+                        page.get_by_role("tab", name="Library", exact=True).click()
+                        expect(studio.locator(".library-row").first).to_be_visible()
+                        for selector in ("#library-items", ".library-toolbar", ".library-toolbar input", ".library-list-heading"):
+                            dark_surface(selector)
+                        studio.locator(".library-row").first.get_by_role("button", name="Preview content", exact=True).click()
+                        expect(studio.locator("#saved-preview")).to_be_visible()
+                        dark_surface("#saved-preview")
+                        studio.locator("#saved-preview-close").click()
+                        page.screenshot(path=str(artifacts / "library-dark.png"))
                         page.locator("#sg-clips-tab").click()
                         page.locator("#sg-project").select_option(board)
                         page.locator("#sg-conversion").select_option(first["id"])
@@ -166,6 +194,18 @@ def main(comfy, python):
                         page.locator("#sg-convert-tab").click()
                         expect(studio.locator("#conversion-view")).to_be_visible()
                         studio.locator("#brief-form").evaluate("async (_, id) => { await loadSaved(id, true); }", board)
+                        studio.locator("#video-family").select_option("ltx")
+                        studio.locator("#video-guide").select_option("image")
+                        expect(studio.locator("#ltx-image-help")).to_be_visible()
+                        studio.locator("#official-guide-preview > summary").click()
+                        for selector in (".conversion-settings", "#official-guide-preview > summary", ".result-metadata > summary", "#official-guide-body", "#official-system-body", ".prompt-clip .prompt-output"):
+                            dark_surface(selector)
+                        studio.locator("#official-guide-preview > summary").click()
+                        studio.locator("#conversion-results .prompt-copy").first.click()
+                        expect(studio.locator(".prompt-copy-status").first).to_have_text("Copied.")
+                        copied = page.evaluate("navigator.clipboard.readText()")
+                        expected_prompt = second["result"]["output"]["clips"][0]["prompt"]
+                        assert copied.replace("\r\n", "\n") == expected_prompt.replace("\r\n", "\n")
                         studio.locator("#conversion-ai-provider").evaluate("node => { node.value='ollama'; node.dispatchEvent(new Event('change')); }")
                         studio.locator("#conversion-ai-model").fill("mock-ollama")
                         studio.locator("#ollama-memory").evaluate("node => { node.parentElement.open = true; }")
@@ -194,6 +234,8 @@ def main(comfy, python):
                             studio.locator("#conversion-run").click()
                         expect(studio.locator("#ollama-memory-status")).to_contain_text("confirmed")
                         assert conversion_calls[-1]["unload_ollama_after"] is True
+                        assert conversion_calls[-1]["guide_id"] == "ltx-2.5-image"
+                        assert conversion_calls[-1]["references"] == []
                         studio.locator("#ollama-auto-unload").uncheck()
                         with page.expect_request("**/storyboard-generator/api/conversion/compile"):
                             studio.locator("#conversion-run").click()
@@ -208,7 +250,7 @@ def main(comfy, python):
                         studio.locator("#brief-form").evaluate("() => I18n.select('ja')")
                         expect(page.get_by_role("button", name="選択したクリップをノードに追加", exact=True)).to_be_visible()
                         studio.locator("#brief-form").evaluate("() => I18n.select('en')")
-                        page.get_by_role("button", name="Close", exact=True).click()
+                        page.locator("#storyboard-panel .sg-close").click()
                         page.get_by_role("button", name="Storyboard", exact=True).click()
                         page.locator("#sg-clips-tab").click()
                         page.set_viewport_size({"width": 390, "height": 844})
