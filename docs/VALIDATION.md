@@ -1,6 +1,8 @@
 # Public beta validation
 
-2026-10-17. Repository: https://github.com/impacifist/ComfyUI-Storyboard-Generator. The shared engine/UI pin is `0734317cb69df1ff83917c37f0c5871a450403f6` (standalone v0.5.4-beta); all 34 imported file checksums were verified before the first release.
+2026-10-18. Repository: https://github.com/impacifist/ComfyUI-Storyboard-Generator. The v0.1.1-beta engine/UI pin is `ebf8ef3b3f34e7f26fab26c7ea173c9f4fb84d57` (standalone v0.5.5-beta). The fixed 34-file snapshot is imported with `tools/sync_upstream.py`.
+
+For v0.1.1-beta, 21 unit tests, Ruff and JavaScript syntax checks passed. `tools/capture_showcase.py` checks actual clipboard contents for both clips (including a collapsed clip) inside the embedded Studio in each of English, Korean and Japanese. It captures five matching-language screenshots per language and connects two saved prompt nodes to PreviewAny in an isolated CPU-only ComfyUI. Examples are authored; AI conversions are mocked and no images or videos are generated. The earlier integration checks below describe the initial implementation.
 
 | Requirement | Evidence |
 | --- | --- |

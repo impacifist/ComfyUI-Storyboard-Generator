@@ -6,11 +6,13 @@ Create storyboards inside ComfyUI, convert them to MiniMax H3 or Seedance prompt
 
 This is an independent ComfyUI node pack. The standalone [AI Video Storyboard Generator](https://github.com/impacifist/ai-video-storyboard-generator) remains independent. No separate web server is required.
 
-![Storyboard creation panel inside ComfyUI: character inputs on the left and editable shots on the right](docs/images/create.png)
+![English storyboard creation panel inside ComfyUI with an English example](docs/images/create-en.png)
 
 ## A walkthrough in four steps
 
-These are actual ComfyUI screenshots from an isolated demo session. The example story uses Korean dialogue with an English interface. Storyboard content comes from the built-in demo template; conversion responses are mocked for UI testing. These screenshots demonstrate the workflow, not the quality of a live AI generation or a finished video.
+These are actual ComfyUI screenshots from an isolated demo session, with an English interface and an authored English story. Conversion responses are mocked for UI testing. These screenshots demonstrate the workflow, not the quality of a live AI generation or a finished video. Each language guide has its own matching interface and example.
+
+**v0.1.1-beta:** each converted clip now has a **Copy prompt** button, available even when the clip is collapsed. It copies only that clip's prompt body, including its dialogue. All-clips TXT/JSON/ZIP exports remain available.
 
 ### 1. Set up your story
 
@@ -18,23 +20,27 @@ Open **Storyboard** in the top action bar, then **API settings** to choose and c
 
 Click **Create a storyboard**, review the shots on the right, and edit them before continuing. **Save and convert** saves a new copy and opens conversion. To explore the interface first, **Load example** fills the form; demo mode uses a template rather than an AI model.
 
+To open the exact English example shown here, import the [English sample JSON](examples/before-the-rain-stops.storyboard.json). Saved projects can be reopened from **Library**.
+
+![English storyboard library with an English sample project](docs/images/library-en.png)
+
 ### 2. Convert the approved shots into video prompts
 
-![Conversion panel with saved source storyboard, AI settings and a clip prompt result](docs/images/convert.png)
+![English conversion panel with source storyboard, AI settings and per-clip copy buttons](docs/images/convert-en.png)
 
-Choose a saved storyboard and the **MiniMax H3** or **Seedance** guide. Review the selected shots and set your clip lengths; apply the split before generating prompts. For example, three 13-second clips deliver 39 seconds of prompt allocation, even when the source storyboard is 45 seconds—check the split rather than assuming the totals match.
+Choose a saved storyboard and the **MiniMax H3** or **Seedance** guide. Review the selected shots and set your clip lengths; apply the split before generating prompts. This example uses a 30-second story split into two 15-second clips. Manual clip lengths can change the total, so review the split before conversion.
 
 Select the conversion provider and model, approve the request checkbox, then click **Generate video prompts**. Review each result and use TXT, JSON or ZIP export if needed. With Ollama, you can also release the selected LLM after conversion; this does not unload ComfyUI's video models.
 
 ### 3. Select the clips you want on the canvas
 
-![Clip prompts tab showing three clips, durations, source shots and connected status](docs/images/clips.png)
+![English clip list with two 15-second clips and connected status](docs/images/clips-en.png)
 
 In **Clip prompts**, choose the project and conversion version. Search by clip, scene or source shot, expand **Prompt preview**, select clips, then click **Add selected clips as nodes**. Connection status helps distinguish clips already on the canvas. Use **Update matching nodes** explicitly when you want a newer conversion; generating another version does not overwrite existing nodes.
 
 ### 4. Connect each prompt to your video workflow
 
-![Three storyboard clip nodes on the ComfyUI canvas, with one prompt output wired to PreviewAny](docs/images/nodes.png)
+![Two English storyboard clip nodes connected to separate PreviewAny nodes](docs/images/nodes-en.png)
 
 The screenshot uses **PreviewAny** to demonstrate a real STRING connection without rendering a video. In your workflow, connect each clip's `prompt` output to the corresponding video prompt input. If the destination is a text widget, convert it to an input first when the node supports that option.
 
@@ -94,7 +100,7 @@ The Studio and wrapper support English, Korean and Japanese. Prompt directions a
 
 ## Shared engine
 
-The engine and Studio assets are an unmodified, pinned snapshot of upstream v0.5.4-beta, not a separately maintained fork. `_vendor/upstream.json` records the full commit and SHA-256 of every imported file. ComfyUI integration lives outside `_vendor`. Loopback LLM requests have no application socket timeout; a model may take more than three minutes to return its first response. Local output budgets and session diagnostics are available in the embedded Studio.
+The engine and Studio assets are an unmodified, pinned snapshot of upstream v0.5.5-beta, not a separately maintained fork. `_vendor/upstream.json` records the full commit and SHA-256 of every imported file. ComfyUI integration lives outside `_vendor`. Loopback LLM requests have no application socket timeout; a model may take more than three minutes to return its first response. Local output budgets and session diagnostics are available in the embedded Studio.
 
 The upstream application does not yet publish an installable engine package. This snapshot permits independent installation without downloading code at runtime or requiring the standalone server. A shared versioned Python package can replace it later.
 

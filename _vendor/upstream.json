@@ -1,6 +1,6 @@
 {
   "repository": "https://github.com/impacifist/ai-video-storyboard-generator",
-  "commit": "0734317cb69df1ff83917c37f0c5871a450403f6",
+  "commit": "ebf8ef3b3f34e7f26fab26c7ea173c9f4fb84d57",
   "files": {
     "docs/guides/action-causality.md": "dac6eab879edaed57f7fe091db454148e2c96453bd80301d0292a67b21c84f32",
     "docs/guides/anime-direction.md": "fc306c2393807643dd64d7d7aec33530c098212f9a58002c8d74a2ca84205d84",
@@ -30,11 +30,11 @@
     "storyboard/providers.py": "ef3898251bc23842fce78bc58d880cb376384da2ee9ce70f7225c7ed4f8021f6",
     "storyboard/references.py": "23ac74aa976c4e8c89c1d696ba93f894f5f3ccdc143ad57561960d194df49b70",
     "storyboard/schema.py": "8b0cc324d969886667bb22bf8247c077a3a2451bf4bfbd53035773344587e16a",
-    "web/app.js": "afea51286ba54ae50a10f791d7059b41bd153f3854ffc3720290fd466a297429",
+    "web/app.js": "11f4d3dab21817c67a1a1fc7e5eb8d5ccf267739e3e6e81a396e12ecb89302c1",
     "web/diagnostics.js": "d0b54996e412d4f4c001018a808b543ddcb7adf9e9ab38ac2025e3b449291f4d",
     "web/i18n.js": "ffa4abf3e23f66dffb5ea21ced8c28280b6841ff01b3c4f4ba58865875143b77",
     "web/index.html": "efd75bd4ebbdb4bc270980623ee6a849c9c11675301a6d0676d4f38e28376bec",
-    "web/style.css": "9317c8faa3b70adf6a78bf245cbdf11474d3886a3494631ba6605aa66f9077e9",
-    "web/translations.js": "dbbce044eff658c4c8f9ff8d3ac1384e5e9b905617f9c212dddf9294f9ea3b1e"
+    "web/style.css": "4e4c072fd27cef51e8915161c54c86dcc31c6ff200bd979044c737692462f8e7",
+    "web/translations.js": "e97efab2365eaf4f55205824edab5cb1cec08ad182f1cebea15b5937fd1adc56"
   }
 }

@@ -36,6 +36,10 @@ window.UI_KOREAN = {
 
 // UI copy only. Never apply this catalog to persona, dialogue, or prompt content.
 window.UI_MESSAGES = {
+  "프롬프트 복사": ["Copy prompt", "プロンプトをコピー"],
+  "{0} 프롬프트 복사": ["Copy {0} prompt", "{0}のプロンプトをコピー"],
+  "복사했습니다.": ["Copied.", "コピーしました。"],
+  "복사하지 못했습니다. 프롬프트 본문을 선택해 복사해주세요.": ["Could not copy. Select and copy the prompt text manually.", "コピーできませんでした。プロンプト本文を選択してコピーしてください。"],
   "로컬 연결 출력 한도 · 토큰": ["Local connection output limit · tokens", "ローカル接続の出力上限 · トークン"],
   "Base URL이 localhost, 127.0.0.1 또는 ::1인 로컬 호환 연결에만 적용합니다. 기본 16000. 입력과 출력 예산이 모델의 컨텍스트 안에 들어가도록 조절하세요. 클라우드 연결에는 적용하지 않습니다.": ["Applies only to compatible local endpoints whose Base URL uses localhost, 127.0.0.1 or ::1. Default: 16000. Keep input plus the output budget within the model's context. Does not apply to cloud endpoints.", "Base URLがlocalhost、127.0.0.1、::1のローカル互換接続にのみ適用します。初期値は16000。入力と出力枠の合計がモデルのコンテキスト内に収まるよう調整してください。クラウド接続には適用しません。"],
   "로컬 AI 출력 한도는 256~131072 사이의 정수로 입력해주세요.": ["Enter a local AI output limit between 256 and 131072 tokens, using a whole number.", "ローカルAIの出力上限は256～131072の整数で入力してください。"],

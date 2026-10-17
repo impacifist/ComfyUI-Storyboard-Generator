@@ -920,6 +920,20 @@ function renderPlan(plan) {
   }
 }
 
+async function copyPromptText(text) {
+  try {
+    if (navigator.clipboard?.writeText) { await navigator.clipboard.writeText(text); return; }
+  } catch { /* Try the browser's selection-based copy in the same user action. */ }
+  const field = document.createElement("textarea");
+  field.value = text; field.style.cssText = "position:fixed;left:-9999px;top:0";
+  const focused = document.activeElement;
+  (focused?.closest("dialog[open]") || document.body).append(field);
+  try {
+    field.select();
+    if (!document.execCommand("copy")) throw new Error("Clipboard unavailable");
+  } finally { field.remove(); focused?.focus({preventScroll: true}); }
+}
+
 function renderConversion(result, date = "", remember = true, savedId = null) {
   if (remember) conversionEntries.push({result, date, savedId});
   const section = el("details", "library-card conversion-result"); section.open = true;
@@ -937,7 +951,18 @@ function renderConversion(result, date = "", remember = true, savedId = null) {
     const detail = el("details", "prompt-clip"); detail.open = clip === result.output.clips[0];
     const planned = result.plan.clips.find((item) => item.id === clip.id);
     detail.append(el("summary", "", tr("{0} · {1}초", {0: clip.id, 1: planned.duration})), el("pre", "prompt-output", clip.prompt));
-    section.append(detail);
+    const row = el("div", "prompt-clip-row");
+    const copy = el("button", "secondary prompt-copy", tr("프롬프트 복사")); copy.type = "button";
+    copy.setAttribute("aria-label", tr("{0} 프롬프트 복사", {0: clip.id}));
+    const status = el("span", "helper prompt-copy-status"); status.setAttribute("role", "status");
+    copy.addEventListener("click", async () => {
+      copy.disabled = true;
+      try { await copyPromptText(clip.prompt); status.textContent = tr("복사했습니다."); }
+      catch { status.textContent = tr("복사하지 못했습니다. 프롬프트 본문을 선택해 복사해주세요."); }
+      finally { copy.disabled = false; }
+    });
+    const actions = el("div", "prompt-copy-actions"); actions.append(status, copy);
+    row.append(detail, actions); section.append(row);
   }
   const downloads = el("div", "result-downloads"); section.insertBefore(downloads, section.children[1]);
   const exportButton = el("button", "secondary", tr("프롬프트 JSON 저장"));

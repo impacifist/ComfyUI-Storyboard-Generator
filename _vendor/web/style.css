@@ -181,6 +181,15 @@ main { padding-top: 24px; }
 .result-downloads a.secondary { margin: 0; }
 .prompt-clip { border-top: 1px solid var(--line); margin-top: 14px; padding-top: 14px; }
 .prompt-clip summary { font-weight: 650; cursor: pointer; }
+.prompt-clip-row { position: relative; }
+.prompt-clip-row .prompt-clip summary { padding-right: 150px; min-height: 38px; }
+.prompt-copy-actions { position: absolute; top: 8px; right: 0; display: flex; align-items: center; gap: 8px; }
+.prompt-copy { white-space: nowrap; }
+.prompt-copy-status { max-width: 160px; font-size: 12px; }
+@media (max-width: 600px) {
+  .prompt-copy-actions { flex-direction: column-reverse; align-items: flex-end; max-width: 140px; }
+  .prompt-copy-status { max-width: 140px; }
+}
 .prompt-clip .prompt-output { background: #f6f8fb; padding: 18px; border-radius: 6px; max-height: 460px; overflow: auto; font-size: 13px; }
 .result-references summary,.conversion-notes summary { cursor: pointer; font-size: 12px; }
 #conversion-picker { width: min(1000px, 94vw); padding: 20px 24px; }

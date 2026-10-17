@@ -1,6 +1,6 @@
 [project]
 name = "comfyui-storyboard-generator"
-version = "0.1.0"
+version = "0.1.1"
 description = "Storyboard creation panel and portable clip prompt nodes for ComfyUI"
 requires-python = ">=3.12"
 dependencies = []
