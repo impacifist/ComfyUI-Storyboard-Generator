@@ -1,0 +1,224 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Persona Storyboard</title>
+  <link rel="stylesheet" href="/style.css">
+  <script src="/translations.js" defer></script>
+  <script src="/i18n.js" defer></script>
+  <script src="/app.js" defer></script>
+  <script src="/diagnostics.js" defer></script>
+</head>
+<body>
+  <div class="shell">
+    <header class="topbar">
+      <div class="wordmark" translate="no">Persona <strong>Storyboard</strong></div>
+      <nav class="studio-nav" aria-label="스튜디오 기능">
+        <button id="nav-create" class="studio-tab" aria-current="page">콘티 제작</button>
+        <button id="nav-manage" class="studio-tab">콘티 관리</button>
+        <button id="nav-convert" class="studio-tab">콘티 변환</button>
+      </nav>
+      <div class="header-actions">
+        <div class="language-control">
+          <button id="language-toggle" class="quiet language-toggle" type="button" aria-label="언어 선택" title="언어 선택" aria-expanded="false" aria-controls="language-menu">
+            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><circle cx="12" cy="12" r="9"/><ellipse cx="12" cy="12" rx="4" ry="9"/><path d="M3 12h18M5 6.5c4 2 10 2 14 0M5 17.5c4-2 10-2 14 0"/></svg>
+          </button>
+          <div id="language-menu" class="language-menu" role="group" aria-label="언어" hidden>
+            <button type="button" data-language="ko" lang="ko" aria-pressed="true">한국어</button>
+            <button type="button" data-language="en" lang="en" aria-pressed="false">English</button>
+            <button type="button" data-language="ja" lang="ja" aria-pressed="false">日本語</button>
+          </div>
+        </div>
+        <button id="settings-open" class="quiet">⚙ API 설정</button>
+        <button id="diagnostics-open" class="quiet">진단 로그</button>
+        <button id="import" class="quiet">↥ JSON 불러오기</button>
+        <button id="save-input" class="quiet">입력 저장</button>
+        <input id="file" type="file" accept=".json,application/json" hidden>
+      </div>
+    </header>
+    <main>
+      <div id="notice" class="notice" role="status" aria-live="polite" hidden></div>
+      <button id="diagnostics-error-open" class="quiet" hidden>진단 로그 보기</button>
+      <div id="library-home"><section id="library-view" hidden aria-label="콘티 관리">
+        <div class="section-heading library-heading"><div><h2 id="library-title">저장한 콘티</h2><p id="library-count" class="helper" role="status"></p></div><button id="library-refresh" class="secondary">목록 새로고침</button></div>
+        <div class="library-toolbar"><label class="library-search-field">제목 검색<input id="library-search" type="search" placeholder="콘티 이름으로 찾기"></label><label>보관함<select id="library-filter"><option value="active">저장한 콘티</option><option value="trash">휴지통</option></select></label><label>정렬<select id="library-sort"><option value="newest">최근 저장 순</option><option value="oldest">오래된 순</option><option value="title">제목 순</option></select></label></div>
+        <div class="library-list-heading" aria-hidden="true"><span>콘티 제목</span><span>컷 수</span><span>길이</span><span>저장일</span><span>작업</span></div>
+        <div id="library-items" class="library-list"></div>
+        <p class="helper library-storage-note">각 저장본은 독립된 사본입니다. 삭제한 콘티는 휴지통에서 복원할 수 있습니다.</p>
+      </section></div>
+      <dialog id="conversion-picker" aria-labelledby="library-title"><div class="picker-toolbar"><button id="conversion-picker-close" class="quiet">닫기 ×</button></div><div id="conversion-picker-content"></div></dialog>
+      <section id="conversion-view" hidden aria-label="콘티 프롬프트 변환">
+        <div class="section-heading"><h2>콘티 → 영상 프롬프트</h2><button id="conversion-choose" class="secondary">저장한 콘티 선택</button></div>
+        <div class="conversion-source-bar"><div><p id="conversion-source" class="story-summary">관리 목록에서 변환할 콘티를 선택하세요.</p><p id="conversion-selection" class="helper"></p></div><button id="conversion-preview" class="quiet" hidden>내용 미리보기</button></div>
+        <div id="conversion-controls" hidden>
+          <div class="conversion-workspace">
+          <aside class="conversion-original">
+          <div class="section-heading"><h3>원본 콘티</h3><button id="conversion-select-all" class="quiet">전체 선택</button></div>
+          <details class="source-overview"><summary>원본 이야기와 캐릭터 확인</summary><div id="conversion-overview"></div></details>
+          <p class="helper">체크한 컷만 변환합니다. 각 컷을 펼쳐 대사와 연출을 확인하세요.</p>
+          <div id="conversion-shots" class="shots"></div>
+          </aside>
+          <div class="conversion-settings">
+          <section class="conversion-settings-section"><h3>영상 설정</h3>
+          <p class="helper">영상 지시문은 영어로, 대사는 원문 그대로 출력합니다.</p>
+          <div class="form-grid"><label>영상 모델<select id="video-family"><option value="seedance">Seedance 2.0</option><option value="minimax">MiniMax H3</option><option value="custom">직접 입력 · 고급</option></select></label><label>공식 가이드 · 입력 방식<select id="video-guide"><option value="text">텍스트 → 영상</option><option value="reference">캐릭터 이미지 참조 → 영상</option></select></label></div>
+          <p id="official-guide-status" class="helper" role="status"></p>
+          <div id="custom-guide-fields" hidden><label>대상 영상 모델 · 정확한 버전<input id="target-model" maxlength="200" placeholder="사용할 영상 모델과 버전"></label><label>프롬프트 가이드 출처<input id="guide-source" maxlength="2048" placeholder="공식 문서 주소 또는 가이드 이름·버전"></label><label>모델의 프롬프트 가이드<textarea id="conversion-guide" rows="7" maxlength="20000" placeholder="해당 모델과 입력 방식에 맞는 가이드 본문을 입력하세요. 주소만으로 자동 수집하지 않습니다."></textarea></label></div>
+          </section>
+          <section id="reference-panel"><h3>캐릭터·배경 참조 이미지</h3><p class="helper">캐릭터와 배경에 여러 장을 추가할 수 있습니다. 합쳐서 9장, 장당 5MB 이하 PNG·JPEG·WebP.</p><p class="helper">이미지는 이 PC에 보관합니다. 변환 AI에는 이미지의 캐릭터·용도·설명만 전송하며 이미지 자체를 분석하지 않습니다. 영상 제작 시 ZIP의 순서대로 직접 첨부하세요.</p><div id="reference-characters"></div><h4>배경 참조 이미지</h4><p class="helper">같은 장소의 전체 구조와 다른 각도를 추가하세요. 설명에 적용할 장소, 좌석·문·창문·통로의 위치와 캐릭터가 앉을 자리를 적으면 구도 유지에 도움이 됩니다.</p><div id="reference-background"></div><div id="reference-list"></div><button id="references-save" class="secondary">참조 설정 저장</button></section>
+          <section class="conversion-settings-section"><h3>클립 분할</h3>
+          <p class="helper">콘티의 컷과 대사에 맞춰 길이를 추천합니다. 아래에서 클립별 초만 바꾸면 됩니다. 전체 길이는 달라질 수 있으며 원본 콘티는 유지됩니다.</p>
+          <button id="conversion-plan" class="secondary">클립 길이 자동 추천</button>
+          <section id="split-advanced" class="split-options"><h4>고급 분할 설정</h4><div class="form-grid split-settings"><label>클립 분할 방식<select id="split-mode"><option value="auto" selected>콘티에 맞게 자동 추천</option><option value="shots">컷·장면 경계 보존</option><option value="fixed">시간 기준 분할 · 최대 길이마다</option><option value="speech">대사 시간 확보 · 전체 길이 늘리기</option></select></label><label>클립 최대 길이 · 초<input id="clip-limit" type="number" min="1" max="15" step="0.1" value="15"></label></div><button id="conversion-split-apply" class="secondary">클립 분할 적용</button><div class="conversion-shortcuts"><button id="conversion-auto-split" class="quiet">전체 콘티를 15초씩 자동 나누기</button><button id="conversion-speech-plan" class="quiet">대사 시간 확보 · 클립 추가 허용</button></div></section>
+          <div id="conversion-plan-result" class="shots"></div>
+          </section>
+          <details class="conversion-advanced"><summary>변환 AI 연결</summary>
+          <div class="form-grid"><label>프롬프트 변환 AI<select id="conversion-ai-provider"><option value="openai">OpenAI</option><option value="claude">Claude</option><option value="ollama">Ollama</option><option value="lmstudio">LM Studio</option></select></label><label>변환 AI 모델 ID<input id="conversion-ai-model" maxlength="200" placeholder="API 설정에 등록한 모델 ID"></label></div>
+          <p id="conversion-ai-note" class="helper"></p>
+          </details>
+          <details id="official-guide-preview"><summary>적용할 가이드와 시스템 프롬프트</summary><h4>참고한 공식 문서</h4><ul id="official-guide-links" class="guide-sources"></ul><h4>적용 가이드</h4><pre id="official-guide-body" class="prompt-output"></pre><h4>시스템 프롬프트</h4><pre id="official-system-body" class="prompt-output"></pre></details>
+          <div class="conversion-submit">
+          <p class="helper">AI 출력 검증 실패 시 최대 1회 추가 호출하여 자동 교정합니다.</p>
+          <label class="check"><input id="conversion-consent" type="checkbox">선택한 AI 연결로 콘티와 가이드 본문을 전송해 변환합니다.</label>
+          <button id="conversion-run" class="primary">가이드에 따라 프롬프트 변환</button>
+          </div>
+          </div></div>
+          <div id="conversion-results" class="shots"></div>
+        </div>
+      </section>
+      <dialog id="saved-preview"><div class="section-heading"><h2>저장한 콘티 미리보기</h2><button id="saved-preview-close" class="secondary">닫기</button></div><div id="saved-preview-content"></div></dialog>
+      <div id="creation-view" class="workspace">
+        <section class="input-column" aria-label="이야기 설정">
+          <form id="brief-form">
+            <div class="section-heading"><h2>이야기의 재료</h2><button id="example" class="text-button" type="button">예시 입력 채우기 ↗</button></div>
+            <p class="helper"><span class="required-mark">#</span> 표시 항목은 콘티 제작에 필수입니다.</p>
+            <label class="title-field">프로젝트 이름<input name="title" required maxlength="12000" placeholder="이야기에 이름을 붙여주세요"></label>
+            <div class="tabs" role="tablist" aria-label="입력 분류">
+              <button id="tab-cast" class="tab active" role="tab" aria-selected="true" aria-controls="cast-panel" type="button">캐릭터 <span>02</span></button>
+              <button id="tab-world" class="tab" role="tab" aria-selected="false" aria-controls="world-panel" type="button">장소와 상황</button>
+              <button id="tab-direction" class="tab" role="tab" aria-selected="false" aria-controls="direction-panel" type="button">이야기 방향</button>
+            </div>
+            <div id="cast-panel" role="tabpanel" aria-labelledby="tab-cast">
+              <div id="characters"></div>
+              <div class="section-heading cast-actions"><span id="cast-count" class="helper"></span><button id="add-character" class="secondary" type="button">캐릭터 추가</button></div>
+              <label>캐릭터 간 관계<textarea name="relationship" rows="3" placeholder="서로를 어떻게 생각하나요? 무엇을 알고 있나요?"></textarea></label>
+            </div>
+            <div id="world-panel" role="tabpanel" aria-labelledby="tab-world" hidden>
+              <label>장소<input name="location" required placeholder="예: 방과 후의 교실"></label>
+              <div class="form-grid"><label>시간대<input name="time" placeholder="늦은 오후"></label><label>분위기<input name="atmosphere" placeholder="잔잔한 빗소리"></label></div>
+              <label>시작 상황 · 위치 · 소품<textarea name="situation" required rows="6" placeholder="누가 어디에서 무엇을 하고 있나요?"></textarea></label>
+            </div>
+            <div id="direction-panel" role="tabpanel" aria-labelledby="tab-direction" hidden>
+              <label>원하는 상호작용<textarea name="intent" required rows="4" placeholder="인물 사이에 어떤 일이 일어나길 원하나요?"></textarea></label>
+              <label>원하는 결말<textarea name="ending" required rows="3" placeholder="장면이 끝났을 때 무엇이 달라져 있나요?"></textarea></label>
+              <div class="form-grid"><label>반드시 포함<textarea name="required" rows="3" placeholder="한 줄에 한 요소"></textarea></label><label>제외할 요소<textarea name="excluded" rows="3" placeholder="한 줄에 한 요소"></textarea></label></div>
+              <label>표현 스타일<textarea name="style" rows="2" placeholder="작은 몸짓과 반응 샷 중심의 일상 애니메이션"></textarea></label>
+            </div>
+            <div class="production"><label>목표 길이 <span>초</span><input name="duration" type="number" min="10" max="180" value="30" required aria-describedby="shot-recommendation shot-recommendation-basis"></label><label>컷 수<input name="shot_count" type="number" min="3" max="60" value="6" required aria-describedby="shot-recommendation shot-recommendation-basis"></label></div>
+            <p id="shot-recommendation" class="helper" role="status" aria-live="polite"></p>
+            <p id="shot-recommendation-basis" class="helper">권장 컷 수는 참고용이며 반드시 맞출 필요는 없습니다. 긴 호흡의 장면은 컷 수를 줄이고, 빠른 전개는 늘려도 됩니다.</p>
+            <p id="large-story-note" class="helper" hidden>13컷 이상을 AI로 제작하면 전체 설계 후 최대 6컷씩 나누어 생성합니다. API 호출과 비용이 늘어나며, 모든 묶음을 검증한 뒤 완성본으로 저장합니다.</p>
+            <details class="provider-box" open>
+              <summary>제작 엔진 <span>AI PROVIDER</span></summary>
+              <div class="form-grid"><label>제공자<select id="provider"><option value="demo">예시 모드 · 전송 없음</option><option value="ollama">Ollama</option><option value="lmstudio">LM Studio</option><option value="openai">OpenAI</option><option value="claude">Claude</option></select></label><label>모델 ID <span id="model-required" class="required-mark" hidden aria-label="AI 사용 시 필수">#</span><input id="model" placeholder="사용할 모델 ID" autocomplete="off"></label></div>
+              <p id="provider-note" class="helper"></p>
+              <p id="key-note" class="helper"></p>
+              <label id="consent-label" class="check" hidden><input id="consent" type="checkbox"><span class="required-mark">#</span> 선택한 제공자에 설정·콘티를 전송해 생성 또는 검수합니다.</label>
+            </details>
+            <button id="generate" class="primary" type="submit"><span>✦</span> 콘티 만들기 <span>→</span></button>
+            <p class="footnote">초안은 검수하고 수정하세요. 생성 결과가 영상의 품질을 보장하지 않습니다.</p>
+          </form>
+        </section>
+        <section class="board-column" aria-label="콘티 작업 공간">
+          <div class="board-top"><div><p class="eyebrow">STORYBOARD WORKSPACE</p><h2 id="board-title">첫 장면을 기다리고 있어요</h2></div><span id="source" class="badge">DRAFT</span></div>
+          <div id="empty" class="empty-board">
+            <div class="frame-stack" aria-hidden="true"><div class="ghost-frame back"></div><div class="ghost-frame front"><span>01</span><div class="composition"><i></i><b></b><em></em></div><small>YOUR FIRST SCENE</small></div></div>
+            <h3>두 사람의 이야기는<br>어떤 장면에서 시작되나요?</h3>
+            <p>왼쪽에서 캐릭터와 상황을 설정하세요.<br>대사, 행동, 카메라 연출이 담긴 콘티를 만듭니다.</p>
+            <button id="try-demo" class="secondary">예시 콘티 체험하기 →</button>
+            <span class="empty-note">예시 모드는 AI 호출 없이 고정 템플릿을 보여줍니다.</span>
+          </div>
+          <div id="board" hidden>
+            <div class="board-toolbar"><span id="stats"></span><div><button id="library-save" class="secondary">보관함에 저장</button><button id="export-json" class="quiet">JSON 저장</button><button id="export-md" class="quiet">콘티 문서 저장</button></div></div>
+            <p id="summary" class="story-summary"></p>
+            <div id="beats" class="beats"></div>
+            <details class="assumptions"><summary>추가 설정과 생성 출처</summary><div id="assumptions"></div><p id="provenance"></p></details>
+            <div id="shots" class="shots"></div>
+            <div class="revision-box"><label>수정 방향<textarea id="revision" rows="2" placeholder="예: 대사를 줄이고 하루의 망설임을 몸짓으로 더 표현해줘"></textarea></label><button id="regenerate" class="secondary">고정 컷 유지하고 재생성 ↻</button></div>
+            <section class="review-section"><div class="section-heading"><h3>콘티 검수</h3><div><button id="validate" class="quiet">연속성 재검수</button><button id="ai-review" class="quiet">선택한 AI로 의미 검수</button></div></div><p class="helper">형식·상태 연결은 코드로 검사합니다. 성격과 이야기의 적합성은 별도 AI 검수와 사용자 검토가 필요합니다.</p><div id="review"></div><div id="ai-result"></div></section>
+            <details class="history-box"><summary>수정 이력</summary><ol id="history"></ol></details>
+          </div>
+        </section>
+      </div>
+    </main>
+    <footer><span>PERSONA STORYBOARD</span><span>캐릭터 → 감정 → 장면 → 콘티</span><span>영상 프롬프트 변환 · 후속 단계</span></footer>
+  </div>
+  <dialog id="settings-dialog" aria-labelledby="settings-title"><form id="settings-form">
+    <div class="section-heading"><div><p class="eyebrow">AI CONNECTIONS</p><h2 id="settings-title">API 설정</h2></div><button id="settings-close" type="button" class="quiet">닫기 ×</button></div>
+    <p class="helper">선택한 제공자의 설정만 저장합니다. 다른 제공자의 입력은 저장하거나 검사하지 않습니다. 키 입력란을 비워두면 기존 키를 유지합니다.</p>
+    <label>설정할 제공자<select id="settings-provider"><option value="openai">OpenAI</option><option value="claude">Claude</option><option value="ollama">Ollama</option><option value="lmstudio">LM Studio</option></select></label>
+    <fieldset id="settings-panel-lmstudio" class="character" hidden><legend>LM Studio</legend>
+      <p class="helper">LM Studio의 Developer 탭에서 모델을 로드하고 로컬 서버를 시작하세요. 서버에 표시된 모델 ID를 입력합니다.</p>
+      <label>Base URL<input id="settings-lmstudio-url" type="text" inputmode="url" autocomplete="off" maxlength="2048" placeholder="http://127.0.0.1:1234/v1"></label>
+      <label>기본 모델 ID<input id="settings-lmstudio-model" maxlength="200" placeholder="LM Studio에 표시된 모델 ID"></label>
+      <label>요청 출력 한도 · 토큰<input id="settings-lmstudio-max-tokens" type="number" min="256" max="131072" step="1" value="16000" aria-describedby="settings-lmstudio-token-note"></label>
+      <p id="settings-lmstudio-token-note" class="helper">추론과 본문이 함께 사용하는 출력 예산입니다. 기본 16000. 입력 토큰과 출력 한도의 합이 모델에 설정한 컨텍스트 길이를 넘지 않게 조절하세요. 추론이 과도하면 모델의 추론 설정도 확인하세요. 값을 높여도 완성이나 품질이 보장되지는 않습니다.</p>
+      <label>JSON 출력 방식<select id="settings-lmstudio-output"><option value="json_schema">JSON Schema · 엄격한 구조화 출력</option><option value="json_object">JSON 모드 · 모델 지원 필요</option><option value="prompt">프롬프트 JSON · 호환 우선</option></select></label>
+      <p id="settings-lmstudio-status" class="helper"></p>
+      <label>API 키 · 선택<input id="settings-lmstudio-key" type="password" autocomplete="new-password" maxlength="4096" placeholder="LM Studio에서 인증을 켠 경우만 입력"></label>
+      <label class="check"><input id="settings-lmstudio-clear" type="checkbox">저장된 LM Studio 키 삭제</label>
+    </fieldset>
+    <fieldset id="settings-panel-ollama" class="character" hidden><legend>OLLAMA</legend>
+      <label>연결 주소 · 선택<input id="settings-ollama-url" type="text" inputmode="url" autocomplete="off" placeholder="http://127.0.0.1:11434"></label>
+      <label>기본 모델 ID<input id="settings-ollama-model" maxlength="200" placeholder="설치된 모델 ID"></label>
+      <label>요청 출력 한도 · 토큰<input id="settings-ollama-max-tokens" type="number" min="256" max="131072" step="1" value="16000" aria-describedby="settings-ollama-token-note"></label>
+      <p id="settings-ollama-token-note" class="helper">추론과 본문이 함께 사용하는 출력 예산입니다. 기본 16000. 입력 토큰과 출력 한도의 합이 모델에 설정한 컨텍스트 길이를 넘지 않게 조절하세요. 추론이 과도하면 모델의 추론 설정도 확인하세요. 값을 높여도 완성이나 품질이 보장되지는 않습니다.</p>
+      <p class="helper">Ollama를 사용할 때만 설정하세요. 비워두면 기존 주소 또는 기본 로컬 주소를 유지합니다.</p>
+    </fieldset>
+    <fieldset id="settings-panel-openai" class="character"><legend>OPENAI</legend>
+      <div class="section-heading"><h3>OpenAI · 호환 API</h3></div>
+      <label>Base URL<input id="settings-openai-url" type="text" inputmode="url" autocomplete="off" maxlength="2048" placeholder="https://api.openai.com/v1"></label>
+      <label>API 방식<select id="settings-openai-mode"><option value="responses">Responses</option><option value="chat_completions">Chat Completions</option></select></label>
+      <label>JSON 출력 방식<select id="settings-openai-output"><option value="json_schema">JSON Schema · 엄격한 구조화 출력</option><option value="json_object">JSON 모드 · 모델 지원 필요</option><option value="prompt">프롬프트 JSON · 호환 우선</option></select></label>
+      <p class="helper">사용할 서비스가 안내하는 Base URL, API 방식, 키와 모델을 입력하세요. 모든 출력 방식은 생성 후 같은 형식 검증을 거칩니다.</p>
+      <p id="settings-openai-status" class="helper"></p>
+      <label>새 API 키<input id="settings-openai-key" type="password" autocomplete="new-password" maxlength="4096" placeholder="변경할 때만 입력"></label>
+      <label class="check"><input id="settings-openai-clear" type="checkbox">저장된 OpenAI 키 삭제</label>
+      <label>기본 모델 ID<input id="settings-openai-model" maxlength="200" placeholder="구조화 출력을 지원하는 모델 ID"></label>
+      <label>로컬 연결 출력 한도 · 토큰<input id="settings-openai-local-max-tokens" type="number" min="256" max="131072" step="1" value="16000" aria-describedby="settings-openai-local-token-note"></label>
+      <p id="settings-openai-local-token-note" class="helper">Base URL이 localhost, 127.0.0.1 또는 ::1인 로컬 호환 연결에만 적용합니다. 기본 16000. 입력과 출력 예산이 모델의 컨텍스트 안에 들어가도록 조절하세요. 클라우드 연결에는 적용하지 않습니다.</p>
+    </fieldset>
+    <fieldset id="settings-panel-claude" class="character" hidden><legend>CLAUDE</legend>
+      <p id="settings-claude-status" class="helper"></p>
+      <label>새 API 키<input id="settings-claude-key" type="password" autocomplete="new-password" maxlength="4096" placeholder="변경할 때만 입력"></label>
+      <label class="check"><input id="settings-claude-clear" type="checkbox">저장된 Claude 키 삭제</label>
+      <label>기본 모델 ID<input id="settings-claude-model" maxlength="200" placeholder="구조화 출력을 지원하는 모델 ID"></label>
+    </fieldset>
+    <p class="helper">설정은 이 PC의 프로젝트 폴더에 저장됩니다. API 키는 암호화되지 않은 로컬 파일에 보관되며, 화면이나 콘티 파일에는 다시 반환하지 않습니다. 환경변수로 관리되는 항목은 웹에서 변경할 수 없습니다.</p>
+    <p id="settings-error" class="error-text" role="alert"></p>
+    <button id="settings-save" class="primary" type="submit">설정 저장</button>
+  </form></dialog>
+  <dialog id="editor"><form id="edit-form" method="dialog">
+    <div class="section-heading"><h2 id="editor-title">컷 편집</h2><button id="close-editor" type="button" class="quiet">닫기 ×</button></div>
+    <p class="helper">대사와 행동, 화면 연출을 수정하세요. 저장하면 모든 컷의 연결을 다시 검사합니다.</p>
+    <div class="form-grid"><label>예상 길이 · 초<input id="edit-duration" type="number" step="0.01" min="0.01" max="180" required></label><label>장면 ID<input id="edit-scene" required></label></div>
+    <label>장면의 역할<input id="edit-purpose" required></label>
+    <label>화면 설명<textarea id="edit-visual" rows="3" required></textarea></label>
+    <label>행동 · 한 줄에 하나씩<textarea id="edit-actions" rows="3" required></textarea></label>
+    <div class="section-heading"><h3>대사</h3><button id="add-line" class="quiet" type="button">+ 대사 추가</button></div>
+    <div id="edit-dialogue"></div>
+    <div class="form-grid"><label>샷 크기<input id="edit-size" required></label><label>시점<input id="edit-angle" required></label><label>카메라 움직임<input id="edit-movement" required></label><label>다음 컷 전환<input id="edit-transition" required></label></div>
+    <label>연속성 메모<textarea id="edit-continuity" rows="2" required></textarea></label>
+    <details><summary>고급 편집 · 인물과 소품의 시작·종료 상태</summary><p class="helper">상태는 구조화된 데이터입니다. 시작과 종료의 인물 ID를 유지하세요.</p><label>상태 데이터<textarea id="edit-json" rows="12" spellcheck="false"></textarea></label></details>
+    <p id="edit-error" class="error-text" role="alert"></p><button id="save-edit" type="submit" class="primary">변경 저장</button>
+  </form></dialog>
+  <dialog id="diagnostics-dialog" aria-labelledby="diagnostics-title">
+    <div class="section-heading"><h2 id="diagnostics-title">진단 로그</h2><button id="diagnostics-close" type="button" class="quiet">닫기 ×</button></div>
+    <p class="helper">현재 실행 중인 앱의 최근 AI 요청 200건을 표시합니다. 재시작하면 초기화됩니다. API 키·주소·프롬프트·대사·응답 본문은 기록하지 않습니다.</p>
+    <div class="diagnostics-actions"><button id="diagnostics-refresh" type="button" class="secondary">새로고침</button><button id="diagnostics-copy" type="button" class="secondary">로그 복사</button><button id="diagnostics-download" type="button" class="secondary">로그 TXT 저장</button><button id="diagnostics-clear" type="button" class="quiet">완료된 로그 지우기</button></div>
+    <p id="diagnostics-status" class="helper" role="status"></p>
+    <div id="diagnostics-list" aria-live="polite"></div>
+  </dialog>
+</body>
+</html>

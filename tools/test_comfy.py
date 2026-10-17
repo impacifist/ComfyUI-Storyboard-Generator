@@ -1,0 +1,233 @@
+"""Real ComfyUI smoke test in an isolated CPU instance; no existing server changes."""
+
+import argparse
+import json
+import os
+import shutil
+import socket
+import subprocess
+import sys
+import tempfile
+import time
+from pathlib import Path
+from unittest.mock import patch
+from urllib.request import urlopen
+
+ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(ROOT / "tests"))
+from support import document, fake_ai, service  # noqa: E402
+from playwright.sync_api import expect, sync_playwright  # noqa: E402
+
+
+def main(comfy, python):
+    artifacts = ROOT / "storage/browser-check"
+    artifacts.mkdir(parents=True, exist_ok=True)
+    with tempfile.TemporaryDirectory(prefix="comfy-storyboard-smoke-") as temporary:
+        temporary = Path(temporary)
+        runtime = temporary / "runtime"
+        runtime.mkdir()
+        plugin = runtime / "custom_nodes/ComfyUI-Storyboard-Generator"
+        shutil.copytree(ROOT, plugin, ignore=shutil.ignore_patterns(".git", "storage", "output", "__pycache__", ".ruff_cache", ".env", ".local-secrets", ".venv"))
+        data = runtime / "user/storyboard-generator"
+        service.configure(data)
+        doc = document()
+        doc["brief"]["title"] = "Subway conversation — smoke sample"
+        doc["brief"]["duration"] = 45
+        for shot in doc["story"]["shots"]:
+            shot["duration"] = 7.5
+        board = service.library.save(doc)["id"]
+        payload = {"id": board, "selected": [s["id"] for s in doc["story"]["shots"]], "split_mode": "auto", "limit": 15,
+                   "clip_durations": {"C01": 13, "C02": 13, "C03": 13}, "guide_id": "minimax-h3-text", "provider": "openai", "model": "mock"}
+        with patch.object(service.providers, "generate_json", side_effect=fake_ai):
+            first = service.dispatch("/conversion/compile", payload)
+            second = service.dispatch("/conversion/compile", payload)
+        with socket.socket() as sock:
+            sock.bind(("127.0.0.1", 0))
+            port = sock.getsockname()[1]
+        environment = {key: value for key, value in os.environ.items() if key not in service.providers.SETTING_FIELDS}
+        environment["STORYBOARD_DATA_DIR"] = str(data)
+        environment["PYTHONUTF8"] = "1"
+        command = [str(python), "main.py", "--cpu", "--listen", "127.0.0.1", "--port", str(port), "--base-directory", str(runtime),
+                   "--disable-all-custom-nodes", "--whitelist-custom-nodes", "ComfyUI-Storyboard-Generator", "--disable-api-nodes", "--disable-auto-launch"]
+        base = f"http://127.0.0.1:{port}"
+        with (artifacts / "comfy-smoke.log").open("wb") as log:
+            process = subprocess.Popen(command, cwd=comfy, env=environment, stdout=log, stderr=subprocess.STDOUT)
+            try:
+                deadline = time.monotonic() + 120
+                while time.monotonic() < deadline:
+                    if process.poll() is not None:
+                        raise RuntimeError("Isolated ComfyUI exited. See storage/browser-check/comfy-smoke.log")
+                    try:
+                        with urlopen(base + "/object_info/StoryboardClipPrompt", timeout=2) as response:
+                            assert "StoryboardClipPrompt" in json.load(response)
+                            break
+                    except OSError:
+                        time.sleep(.4)
+                else:
+                    raise TimeoutError("Isolated ComfyUI did not become ready")
+                print("PASS: real ComfyUI loaded the custom node and routes.", flush=True)
+                with sync_playwright() as playwright:
+                    browser = playwright.chromium.launch()
+                    page = browser.new_page(viewport={"width": 1600, "height": 1050})
+                    errors = []
+                    page.on("pageerror", lambda error: errors.append(str(error)))
+                    try:
+                        page.goto(base)
+                        page.wait_for_function("window.comfyAPI?.app?.app", timeout=60000)
+                        page.evaluate("async () => { window.testApp = (await import('./scripts/app.js')).app; }")
+                        page.wait_for_function("window.testApp?.graph && window.testApp?.canvas", timeout=60000)
+                        expect(page.locator("#splash-loader")).not_to_be_visible(timeout=60000)
+                        page.keyboard.press("Escape")  # Dismiss ComfyUI's first-run template browser.
+                        page.get_by_role("button", name="Storyboard", exact=True).click(timeout=30000)
+                        expect(page.locator("#storyboard-panel")).to_be_visible()
+                        studio = page.frame_locator(".sg-studio")
+                        expect(studio.locator("#brief-form")).to_be_visible()
+                        studio.locator("#example").click()
+                        studio.locator("#generate").click()
+                        expect(studio.locator("#shots .shot")).to_have_count(6)
+                        assert studio.locator("#generate").evaluate("node => node.form.id") == "brief-form"
+                        page.screenshot(path=str(artifacts / "workbench-create-desktop.png"))
+                        studio.locator("#workbench-next").click()
+                        expect(studio.locator("#conversion-controls")).to_be_visible()
+                        expect(page.locator("#sg-convert-tab")).to_have_attribute("aria-selected", "true")
+                        page.locator("#sg-clips-tab").click()
+                        page.locator("#sg-project").select_option(board)
+                        page.locator("#sg-conversion").select_option(first["id"])
+                        expect(page.locator(".sg-clip")).to_have_count(3)
+                        page.locator("#sg-search").fill("C02")
+                        expect(page.locator(".sg-clip")).to_have_count(1)
+                        page.locator("#sg-search").fill("")
+                        page.get_by_role("button", name="Select visible clips", exact=True).click()
+                        page.get_by_role("button", name="Add selected clips as nodes", exact=True).click()
+                        assert page.evaluate("testApp.graph._nodes.filter(n => n.type === 'StoryboardClipPrompt').length") == 3
+                        page.get_by_role("button", name="Add selected clips as nodes", exact=True).click()
+                        assert page.evaluate("testApp.graph._nodes.filter(n => n.type === 'StoryboardClipPrompt').length") == 3
+                        first_value = page.evaluate("testApp.graph._nodes.find(n => n.type === 'StoryboardClipPrompt').widgets.find(w => w.name === 'clip_data').value")
+                        page.evaluate("""() => {
+                          const nodes = testApp.graph._nodes.filter(n => n.type === 'StoryboardClipPrompt');
+                          const sink = LiteGraph.createNode('PreviewAny'); testApp.graph.add(sink);
+                          nodes[0].connect(0, sink, 0);
+                          window.savedWorkflow = testApp.graph.serialize();
+                        }""")
+                        workflow = page.evaluate("savedWorkflow")
+                        (artifacts / "sample-workflow.json").write_text(json.dumps(workflow, ensure_ascii=False, indent=2), encoding="utf-8")
+                        page.locator("#sg-conversion").select_option(second["id"])
+                        expect(page.locator(".sg-clip-meta").first).to_contain_text("Another conversion")
+                        assert page.evaluate("testApp.graph._nodes.find(n => n.type === 'StoryboardClipPrompt').widgets.find(w => w.name === 'clip_data').value") == first_value
+                        page.get_by_role("button", name="Select visible clips", exact=True).click()
+                        page.evaluate("testApp.extensionManager.dialog.confirm = async () => true")
+                        page.get_by_role("button", name="Update matching nodes", exact=True).click()
+                        expect(page.locator(".sg-status")).to_contain_text("Nodes updated")
+                        assert page.evaluate("testApp.graph._nodes.find(n => n.type === 'StoryboardClipPrompt').outputs[0].links.length") == 1
+                        page.screenshot(path=str(artifacts / "clips-desktop.png"))
+                        page.get_by_role("button", name="Close", exact=True).click()
+                        page.evaluate("async () => { await testApp.loadGraphData(window.savedWorkflow); }")
+                        assert page.evaluate("testApp.graph._nodes.find(n => n.type === 'StoryboardClipPrompt').widgets.find(w => w.name === 'clip_data').value") == first_value
+                        awaitable = page.request.post(base + "/prompt", data={"prompt": {
+                            "1": {"class_type": "StoryboardClipPrompt", "inputs": {"clip_data": first_value}},
+                            "2": {"class_type": "PreviewAny", "inputs": {"source": ["1", 0]}}}})
+                        assert awaitable.ok, awaitable.text()
+                        queued = awaitable.json()["prompt_id"]
+                        for _ in range(40):
+                            history = page.request.get(base + "/history/" + queued).json()
+                            if queued in history:
+                                assert history[queued]["status"]["status_str"] == "success", history
+                                assert history[queued]["outputs"]["2"]["text"][0] == json.loads(first_value)["prompt"]
+                                break
+                            page.wait_for_timeout(250)
+                        else:
+                            raise AssertionError("String-only queue test did not complete")
+                        page.evaluate("""async () => {
+                          const node = testApp.graph._nodes.find(n => n.type === 'StoryboardClipPrompt');
+                          await node.widgets.find(w => w.name === 'Choose clip').callback();
+                        }""")
+                        expect(page.get_by_role("button", name="Use this clip in the selected node", exact=True)).to_be_visible()
+                        page.locator(".sg-clip input[aria-label='C03']").check()
+                        page.get_by_role("button", name="Use this clip in the selected node", exact=True).click()
+                        assert page.evaluate("JSON.parse(testApp.graph._nodes.find(n => n.type === 'StoryboardClipPrompt').widgets.find(w => w.name === 'clip_data').value).clip_id") == "C03"
+                        assert page.evaluate("testApp.graph._nodes.find(n => n.type === 'StoryboardClipPrompt').outputs[0].links.length") == 1
+                        # UI lifecycle requests are mocked; never unload a user's real model.
+                        page.get_by_role("tab", name="Create", exact=True).click()
+                        expect(studio.locator("#creation-view")).to_be_visible()
+                        page.locator("#sg-convert-tab").click()
+                        expect(studio.locator("#conversion-view")).to_be_visible()
+                        studio.locator("#brief-form").evaluate("async (_, id) => { await loadSaved(id, true); }", board)
+                        studio.locator("#conversion-ai-provider").evaluate("node => { node.value='ollama'; node.dispatchEvent(new Event('change')); }")
+                        studio.locator("#conversion-ai-model").fill("mock-ollama")
+                        studio.locator("#ollama-memory").evaluate("node => { node.parentElement.open = true; }")
+                        expect(studio.locator("#ollama-auto-unload")).to_be_checked()
+                        unload_calls, conversion_calls = [], []
+
+                        def unload_route(route):
+                            unload_calls.append(route.request.post_data_json)
+                            route.fulfill(json={"ollama_release": {"status": "unloaded"}})
+
+                        def conversion_route(route):
+                            body = route.request.post_data_json
+                            conversion_calls.append(body)
+                            result = {**first}
+                            if body.get("unload_ollama_after"):
+                                result["ollama_release"] = {"status": "unloaded"}
+                            route.fulfill(json=result)
+
+                        page.route("**/storyboard-generator/api/ollama/unload", unload_route)
+                        page.route("**/storyboard-generator/api/conversion/compile", conversion_route)
+                        studio.locator("#ollama-unload").click()
+                        expect(studio.locator("#ollama-memory-status")).to_contain_text("confirmed")
+                        assert unload_calls == [{"model": "mock-ollama"}]
+                        studio.locator("#conversion-consent").check()
+                        with page.expect_request("**/storyboard-generator/api/conversion/compile"):
+                            studio.locator("#conversion-run").click()
+                        expect(studio.locator("#ollama-memory-status")).to_contain_text("confirmed")
+                        assert conversion_calls[-1]["unload_ollama_after"] is True
+                        studio.locator("#ollama-auto-unload").uncheck()
+                        with page.expect_request("**/storyboard-generator/api/conversion/compile"):
+                            studio.locator("#conversion-run").click()
+                        expect(studio.locator("#ollama-memory-status")).to_be_empty()
+                        assert conversion_calls[-1]["unload_ollama_after"] is False
+                        assert studio.locator("#brief-form").evaluate("() => localStorage.getItem('comfyui-storyboard.ollama-auto-unload')") == "false"
+                        assert studio.locator("#conversion-results").evaluate("node => node.getBoundingClientRect().top < innerHeight / 2 && node.getBoundingClientRect().bottom <= innerHeight")
+                        page.screenshot(path=str(artifacts / "ollama-memory-desktop.png"))
+                        page.get_by_role("tab", name="Clip prompts", exact=True).click()
+                        studio.locator("#brief-form").evaluate("() => I18n.select('ko')")
+                        expect(page.get_by_role("button", name="선택한 클립을 노드로 추가", exact=True)).to_be_visible()
+                        studio.locator("#brief-form").evaluate("() => I18n.select('ja')")
+                        expect(page.get_by_role("button", name="選択したクリップをノードに追加", exact=True)).to_be_visible()
+                        studio.locator("#brief-form").evaluate("() => I18n.select('en')")
+                        page.get_by_role("button", name="Close", exact=True).click()
+                        page.get_by_role("button", name="Storyboard", exact=True).click()
+                        page.locator("#sg-clips-tab").click()
+                        page.set_viewport_size({"width": 390, "height": 844})
+                        page.screenshot(path=str(artifacts / "clips-mobile.png"))
+                        assert page.locator("#storyboard-panel").evaluate("e => e.scrollWidth <= e.clientWidth + 1")
+                        page.get_by_role("tab", name="Create", exact=True).click()
+                        expect(studio.locator("#creation-view")).to_be_visible()
+                        assert studio.locator("body").evaluate("() => document.documentElement.scrollWidth <= innerWidth + 1")
+                        expect(studio.locator("#generate")).to_be_visible()
+                        for lang in ("ko", "ja", "en"):
+                            studio.locator("#brief-form").evaluate("(_, language) => I18n.select(language)", lang)
+                            assert studio.locator("body").evaluate("() => document.documentElement.scrollWidth <= innerWidth + 1")
+                        page.screenshot(path=str(artifacts / "workbench-create-mobile.png"))
+                        assert not errors, errors
+                        print("PASS: toolbar, embedded creation, clip search, 3 nodes, deduplication, explicit update, per-node selection, preserved wires, workflow reload, actual STRING queue, Ollama auto/manual unload UI with mocked requests, 3 languages and mobile.", flush=True)
+                    except Exception:
+                        page.screenshot(path=str(artifacts / "failure.png"))
+                        (artifacts / "browser-errors.json").write_text(json.dumps(errors, indent=2), encoding="utf-8")
+                        raise
+                    finally:
+                        browser.close()
+            finally:
+                process.terminate()
+                try:
+                    process.wait(timeout=15)
+                except subprocess.TimeoutExpired:
+                    process.kill()
+                    process.wait(timeout=5)
+
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--comfy", required=True, type=Path)
+    parser.add_argument("--python", required=True, type=Path)
+    args = parser.parse_args()
+    main(args.comfy.resolve(), args.python.resolve())

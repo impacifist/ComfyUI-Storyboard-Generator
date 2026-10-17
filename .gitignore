@@ -1,0 +1,11 @@
+__pycache__/
+*.py[cod]
+.ruff_cache/
+.pytest_cache/
+.env
+.local-secrets/
+storage/
+output/
+dist/
+.venv/
+node_modules/
