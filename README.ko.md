@@ -1,6 +1,6 @@
 # ComfyUI 스토리보드 생성기
 
-[English](README.md) | 한국어
+[English](README.md) | 한국어 | [日本語](README.ja.md)
 
 ComfyUI 상단의 **Storyboard** 아이콘을 눌러 콘티를 직접 제작하고, 변환한 클립별 프롬프트를 문자열 출력 노드로 연결합니다. **Extensions → Storyboard** 메뉴에서도 열 수 있습니다.
 

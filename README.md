@@ -1,6 +1,6 @@
 # ComfyUI Storyboard Generator
 
-English | [한국어](README.ko.md)
+English | [한국어](README.ko.md) | [日本語](README.ja.md)
 
 Create storyboards inside ComfyUI, convert them to MiniMax H3 or Seedance prompts, and connect each clip as a separate **STRING** output.
 
