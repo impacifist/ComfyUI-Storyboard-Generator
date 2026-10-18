@@ -6,19 +6,19 @@ Create storyboards inside ComfyUI, convert them to MiniMax H3, Seedance or LTX 2
 
 This is an independent ComfyUI node pack. The standalone [AI Video Storyboard Generator](https://github.com/impacifist/ai-video-storyboard-generator) remains independent. No separate web server is required.
 
+## Finished animation example
+
+[![Two friends talking on a subway — finished animation](docs/demo/subway-conversation-poster.jpg)](https://impacifist.github.io/creative-portfolio/#video-current-case)
+
+[Watch the animation and production breakdown](https://impacifist.github.io/creative-portfolio/#video-current-case) · [Open the MP4](docs/demo/subway-conversation-web.mp4)
+
+A 30-second storyboard excerpt rendered with MiniMax H3 and edited to 27.46 seconds. Character settings become dialogue, acting and camera direction; the Japanese dialogue was reviewed and corrected by the creator. This is a rendered example, separate from the mocked UI walkthrough below.
+
 ![English storyboard creation panel inside ComfyUI with an English example](docs/images/create-en.png)
-
-## LTX 2.5 and dark-theme fixes
-
-Convert now includes **LTX 2.5** with **Text → video** and **Starting image → video** modes. The pinned [official-source summary](_vendor/docs/guides/ltx-2.5.md) and [compiler policy](_vendor/docs/guides/ltx-system.md) render chronological English prose with quoted original dialogue. Copy individual clips or add them as STRING nodes as usual.
-
-Connect each clip's opening image separately in the LTX video workflow; the panel does not analyze or transfer it. The current planner range is 4–15 seconds, not LTX's maximum duration. Configure frames/FPS in the video workflow and disable Prompt Enhance to test the exact prompt. Library surfaces, preview dialogs and conversion guide/output panes now use matching dark backgrounds and readable text. Conversion tests use mocked AI; actual LTX video quality is not verified.
 
 ## A walkthrough in four steps
 
 These are actual ComfyUI screenshots from an isolated demo session, with an English interface and an authored English story. Conversion responses are mocked for UI testing. These screenshots demonstrate the workflow, not the quality of a live AI generation or a finished video. Each language guide has its own matching interface and example.
-
-**v0.1.2-beta:** adds LTX 2.5 conversion and corrects dark-theme contrast. Each converted clip has a **Copy prompt** button, available even when collapsed. It copies only that clip's prompt body, including its dialogue. All-clips TXT/JSON/ZIP exports remain available.
 
 ### 1. Set up your story
 

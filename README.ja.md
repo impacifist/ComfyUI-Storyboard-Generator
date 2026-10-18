@@ -6,19 +6,19 @@ ComfyUIの中でストーリーボードを作成し、MiniMax H3、Seedance、L
 
 独立したComfyUIカスタムノードです。[Webアプリ版のAI Video Storyboard Generator](https://github.com/impacifist/ai-video-storyboard-generator)とは別にインストールでき、専用のWebサーバーを起動する必要はありません。
 
+## 完成したアニメーションの例
+
+[![電車内で会話する二人の完成アニメーション](docs/demo/subway-conversation-poster.jpg)](https://impacifist.github.io/creative-portfolio/#video-current-case)
+
+[動画と制作過程を見る](https://impacifist.github.io/creative-portfolio/#video-current-case) · [MP4を開く](docs/demo/subway-conversation-web.mp4)
+
+30秒分のストーリーボードを抜粋し、MiniMax H3で生成して27.46秒に編集した作品です。キャラクターの性格と会話の流れを、セリフ・演技・カメラの構図に落とし込みました。日本語のセリフは制作者が確認・修正しています。以下の模擬AIによる操作例とは別の、実際に生成した動画です。
+
 ![日本語のComfyUI制作パネルと日本語のキャラクター・カット例](docs/images/create-ja.png)
-
-## LTX 2.5対応とダークテーマの修正
-
-変換タブで **LTX 2.5** と **テキスト → 動画** または **開始画像 → 動画** を選べます。[公式資料の要約](_vendor/docs/guides/ltx-2.5.md)と[専用システム規則](_vendor/docs/guides/ltx-system.md)に基づき、時系列の英文と原文のセリフを出力します。クリップ単位のコピーとSTRINGノードへの接続も利用できます。
-
-開始画像は各クリップのLTX動画ワークフローで直接接続してください。パネルでの解析や転送は行いません。現在の分割範囲4〜15秒はアプリ側の設定であり、LTXモデルの生成上限ではありません。フレーム数とFPSは動画ワークフローで指定し、文章をそのまま試すにはPrompt Enhanceをオフにしてください。ライブラリ、プレビュー画面、変換ガイドと出力欄の白い背景と文字のコントラストを修正しました。模擬AIによる機能検証を行い、実際のLTX動画品質は未検証です。
 
 ## 4つの手順で使ってみる
 
 画像は、テスト用のComfyUIで日本語UIと手作業で作成した日本語サンプルを使って撮影しました。変換応答はUI検証用の模擬データです。実際のAI生成品質や完成動画を示すものではありません。動画の演出指示は英語、セリフは日本語のまま出力します。
-
-**v0.1.2-beta:** LTX 2.5対応とダークテーマのコントラスト修正を含みます。各クリップの**プロンプトをコピー**ボタンで、閉じたクリップからも本文とセリフだけをコピーできます。全体のTXT・JSON・ZIP出力も引き続き利用できます。
 
 ### 1. キャラクターと物語を設定する
 
