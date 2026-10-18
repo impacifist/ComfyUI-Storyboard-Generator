@@ -8,9 +8,7 @@ ComfyUIの中でストーリーボードを作成し、MiniMax H3、Seedance、L
 
 ## 完成したアニメーションの例
 
-[![電車内で会話する二人の完成アニメーション](docs/demo/subway-conversation-poster.jpg)](https://github.com/impacifist/ComfyUI-Storyboard-Generator/releases/download/v0.1.2-beta/subway-conversation.mp4)
-
-[サンプル動画をダウンロード](https://github.com/impacifist/ComfyUI-Storyboard-Generator/releases/download/v0.1.2-beta/subway-conversation.mp4) · [MP4を開く](docs/demo/subway-conversation-web.mp4)
+https://github.com/user-attachments/assets/0d82f51c-8621-4540-af1c-118edf0df261
 
 30秒分のストーリーボードを抜粋し、MiniMax H3で生成して27.46秒に編集した作品です。キャラクターの性格と会話の流れを、セリフ・演技・カメラの構図に落とし込みました。日本語のセリフは制作者が確認・修正しています。以下の模擬AIによる操作例とは別の、実際に生成した動画です。
 

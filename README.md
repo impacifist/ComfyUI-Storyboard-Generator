@@ -8,9 +8,7 @@ This is an independent ComfyUI node pack. The standalone [AI Video Storyboard Ge
 
 ## Finished animation example
 
-[![Two friends talking on a subway — finished animation](docs/demo/subway-conversation-poster.jpg)](https://github.com/impacifist/ComfyUI-Storyboard-Generator/releases/download/v0.1.2-beta/subway-conversation.mp4)
-
-[Download the example video](https://github.com/impacifist/ComfyUI-Storyboard-Generator/releases/download/v0.1.2-beta/subway-conversation.mp4) · [Open the MP4](docs/demo/subway-conversation-web.mp4)
+https://github.com/user-attachments/assets/0d82f51c-8621-4540-af1c-118edf0df261
 
 A 30-second storyboard excerpt rendered with MiniMax H3 and edited to 27.46 seconds. Character settings become dialogue, acting and camera direction; the Japanese dialogue was reviewed and corrected by the creator. This is a rendered example, separate from the mocked UI walkthrough below.
 

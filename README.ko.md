@@ -6,9 +6,7 @@ ComfyUI 상단의 **Storyboard** 아이콘을 눌러 콘티를 직접 제작하�
 
 ## 완성 애니메이션 예시
 
-[![지하철에서 대화하는 두 친구의 완성 애니메이션](docs/demo/subway-conversation-poster.jpg)](https://github.com/impacifist/ComfyUI-Storyboard-Generator/releases/download/v0.1.2-beta/subway-conversation.mp4)
-
-[예시 영상 다운로드](https://github.com/impacifist/ComfyUI-Storyboard-Generator/releases/download/v0.1.2-beta/subway-conversation.mp4) · [MP4 열기](docs/demo/subway-conversation-web.mp4)
+https://github.com/user-attachments/assets/0d82f51c-8621-4540-af1c-118edf0df261
 
 30초 분량의 콘티를 발췌해 MiniMax H3로 제작하고 27.46초로 편집한 실제 결과입니다. 직접 정한 캐릭터 성격과 대화 흐름을 생성기로 대사·행동·카메라 연출에 반영했고, 일본어 대사는 제작자가 검수·첨삭했습니다. 아래의 모의 AI 사용 화면과 구분되는 완성 영상 사례입니다.
 
