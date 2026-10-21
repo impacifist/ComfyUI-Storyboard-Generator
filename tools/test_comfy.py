@@ -104,6 +104,27 @@ def main(comfy, python):
                                 return sum(v * weight for v, weight in zip(values, (.2126, .7152, .0722)))
                             light, dark = sorted([luminance(colors["ink"]), luminance(colors["bg"])], reverse=True)
                             assert (light + .05) / (dark + .05) >= 4.5, (selector, style)
+
+                        def conversion_layout():
+                            for width in (1440, 1920, 2560):
+                                page.set_viewport_size({"width": width, "height": 1080})
+                                assert page.locator("#storyboard-panel").evaluate("node => node.getBoundingClientRect().width >= innerWidth * .97")
+                                dimensions = studio.locator("#conversion-controls").evaluate("""node => {
+                                  const setting = node.querySelector('.conversion-settings').getBoundingClientRect();
+                                  const result = node.querySelector('#conversion-results').getBoundingClientRect();
+                                  const workspace = node.querySelector('.conversion-workspace').getBoundingClientRect();
+                                  const view = document.querySelector('#conversion-view').getBoundingClientRect();
+                                  return {settings: setting.width, results: result.width, workspace: workspace.width,
+                                    view: view.width, viewport: innerWidth, beside: result.left >= setting.right,
+                                    aligned: Math.abs(result.top - setting.top) < 2};
+                                }""")
+                                assert dimensions['view'] >= dimensions['viewport'] - 44, dimensions
+                                assert dimensions['workspace'] >= dimensions['view'] - 2, dimensions
+                                assert .3 < dimensions['settings'] / dimensions['workspace'] < .5, dimensions
+                                assert dimensions['results'] >= dimensions['workspace'] * .5, dimensions
+                                assert dimensions['beside'] and dimensions['aligned'], dimensions
+                                assert studio.locator("body").evaluate("() => document.documentElement.scrollWidth <= innerWidth + 1")
+                            page.set_viewport_size({"width": 1600, "height": 1050})
                         studio.locator("#example").click()
                         studio.locator("#generate").click()
                         expect(studio.locator("#shots .shot")).to_have_count(6)
@@ -112,6 +133,11 @@ def main(comfy, python):
                         studio.locator("#workbench-next").click()
                         expect(studio.locator("#conversion-controls")).to_be_visible()
                         expect(page.locator("#sg-convert-tab")).to_have_attribute("aria-selected", "true")
+                        expect(studio.locator("#conversion-results")).to_be_empty()
+                        for lang in ("ko", "ja", "en"):
+                            studio.locator("#brief-form").evaluate("(_, language) => I18n.select(language)", lang)
+                            conversion_layout()
+                        page.screenshot(path=str(artifacts / "conversion-before-wide.png"))
                         page.get_by_role("tab", name="Library", exact=True).click()
                         expect(studio.locator(".library-row").first).to_be_visible()
                         for selector in ("#library-items", ".library-toolbar", ".library-toolbar input", ".library-list-heading"):
@@ -263,27 +289,11 @@ def main(comfy, python):
                         for selector in ("#reference-panel", ".reference-composer", ".reference-group[open] .reference-card", "#reference-usage"):
                             dark_surface(selector)
                         dark_surface('.reference-kind-picker [aria-pressed="true"]', require_dark=False)
-                        for width in (1440, 1920, 2560):
-                            page.set_viewport_size({"width": width, "height": 1080})
-                            assert page.locator("#storyboard-panel").evaluate("node => node.getBoundingClientRect().width >= innerWidth * .97")
-                            dimensions = studio.locator("#conversion-controls").evaluate("""node => {
-                              const setting = node.querySelector('.conversion-settings').getBoundingClientRect();
-                              const result = node.querySelector('#conversion-results').getBoundingClientRect();
-                              const reference = node.querySelector('#reference-panel').getBoundingClientRect();
-                              const workspace = node.querySelector('.conversion-workspace').getBoundingClientRect();
-                              return {settings: setting.width, results: result.width, references: reference.width,
-                                workspace: workspace.width, ordered: result.top >= setting.bottom,
-                                scrolls: getComputedStyle(node).overflowY === 'auto'};
-                            }""")
-                            assert dimensions['settings'] >= dimensions['workspace'] * .98, dimensions
-                            assert dimensions['results'] >= dimensions['workspace'] * .98, dimensions
-                            assert dimensions['references'] >= dimensions['workspace'] * .9, dimensions
-                            assert dimensions['ordered'] and dimensions['scrolls'], dimensions
-                            assert studio.locator("body").evaluate("() => document.documentElement.scrollWidth <= innerWidth + 1")
-                        page.set_viewport_size({"width": 1600, "height": 1050})
+                        conversion_layout()
                         studio.locator("#reference-panel").scroll_into_view_if_needed()
                         page.screenshot(path=str(artifacts / "references-four-types-dark.png"))
                         page.screenshot(path=str(artifacts / "conversion-full-width.png"))
+                        page.screenshot(path=str(artifacts / "conversion-after-wide.png"))
                         page.set_viewport_size({"width": 390, "height": 844})
                         assert studio.locator("body").evaluate("() => document.documentElement.scrollWidth <= innerWidth + 1")
                         page.set_viewport_size({"width": 1600, "height": 1050})
