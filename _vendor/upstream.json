@@ -1,6 +1,6 @@
 {
   "repository": "https://github.com/impacifist/ai-video-storyboard-generator",
-  "commit": "8280e217aa85fd31fbeb783dacedd4bc8ad7c3c2",
+  "commit": "49e1777e3c2ebdb824fd3802bf48e96ff25ea135",
   "files": {
     "docs/guides/action-causality.md": "dac6eab879edaed57f7fe091db454148e2c96453bd80301d0292a67b21c84f32",
     "docs/guides/anime-direction.md": "fc306c2393807643dd64d7d7aec33530c098212f9a58002c8d74a2ca84205d84",
