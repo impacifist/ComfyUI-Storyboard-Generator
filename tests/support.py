@@ -34,7 +34,7 @@ def direction_output(layout, assets=()):
         "clips": [{"id": clip["id"], "context": "A quiet classroom with consistent lighting.",
             "subject_definitions": "Preserve character identity.", "summary": "A restrained interaction.", "retention_analysis": "Preserve identity and clothing.",
             "shots": [{"id": shot["id"], "direction": "Follow the approved action with subtle expressions.", "pacing_weight": 1,
-                "speech_cues": ["Begin with the approved response." for _ in shot["source"]["dialogue"]],
+                "speech_cues": [{"speaker": line["speaker"], "mode": "unspecified", "onset": "Begin with the approved response."} for line in shot["source"]["dialogue"]],
                 "camera": {"size": "Medium shot", "angle": "Eye level", "movement": "Locked camera", "transition": "Cut on the reaction", "layout": "Character 1 on the left, Character 2 on the right."},
                 "dialogue_language": "Korean", "deliveries": ["Very quietly" if line["delivery"] else "" for line in shot["source"]["dialogue"]]} for shot in clip["shots"]],
             "overall_soundscape": "Quiet room ambience.", "non_diegetic_music": "N/A"} for clip in layout["clips"]]}

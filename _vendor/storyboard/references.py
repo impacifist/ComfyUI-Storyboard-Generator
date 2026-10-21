@@ -12,7 +12,16 @@ import zipfile
 from . import library
 from .schema import ValidationError
 
-ROLES = ("face", "body", "outfit", "expression", "detail")
+ROLES = ("appearance", "face", "body", "outfit", "expression", "detail")
+ROLE_GUIDANCE = {
+    "appearance": "Use this image for this character's face, hairstyle, clothing, colors and accessories.",
+    "face": "Use this image for the face and hairstyle; keep clothing and actions from the approved storyboard or outfit reference.",
+    "body": "Use this image for body proportions and silhouette; preserve the approved action and camera framing.",
+    "outfit": "Use this image for clothing and accessories, without changing the character's facial identity.",
+    "expression": "Use this image for the intended facial expression, without replacing the character's identity or clothing.",
+    "detail": "Use only the specific visual details identified in the reference note.",
+    "environment": "Use this image for the location's architecture and spatial layout, not for character identity.",
+}
 BACKGROUND_ROLE = "environment"
 MAX_IMAGE = 5_000_000
 
@@ -58,7 +67,7 @@ def upload(payload):
         db.execute("INSERT INTO reference_assets VALUES (?, ?, ?, ?, ?, ?, ?)",
                    (key, payload["id"], character, name, mime, digest, data))
     return {"id": key, "character_id": character, "name": name, "mime": mime, "sha256": digest,
-            "role": BACKGROUND_ROLE if background else "face", "note": ""}
+            "role": BACKGROUND_ROLE if background else "appearance", "note": ""}
 
 
 def asset(key):
@@ -93,7 +102,7 @@ def manifest(board_id, selection, profile=None):
         label = f"<Picture {index + 1}>" if profile and profile["id"].startswith("minimax") else f"Image {index + 1}"
         result.append({"id": row["id"], "character_id": row["character_id"], "name": row["name"],
                        "mime": row["mime"], "sha256": row["sha256"], "role": role, "note": note,
-                       "order": index + 1, "label": label})
+                       "order": index + 1, "label": label, "guidance": ROLE_GUIDANCE[role]})
     return result
 
 

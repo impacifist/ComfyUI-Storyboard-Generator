@@ -4,6 +4,8 @@ import json
 import re
 import unicodedata
 
+from .references import ROLE_GUIDANCE
+from . import speech
 from .schema import CHAR_STATE, NUMBER, TEXT, ValidationError, array, obj, validate
 
 DIRECTION_STATE = obj(characters=array(CHAR_STATE),
@@ -11,7 +13,7 @@ DIRECTION_STATE = obj(characters=array(CHAR_STATE),
 
 DIRECTOR_OUTPUT = obj(clips=array(obj(
     id=TEXT, context=TEXT, subject_definitions=TEXT, summary=TEXT, retention_analysis=TEXT,
-    shots=array(obj(id=TEXT, direction=TEXT, pacing_weight=NUMBER, speech_cues=array(TEXT),
+    shots=array(obj(id=TEXT, direction=TEXT, pacing_weight=NUMBER, speech_cues=array(speech.CUE),
                     camera=obj(size=TEXT, angle=TEXT, movement=TEXT, transition=TEXT, layout=TEXT),
                     dialogue_language=TEXT, deliveries=array(TEXT))),
     overall_soundscape=TEXT, non_diegetic_music=TEXT)), boundaries=array(obj(id=TEXT, state=DIRECTION_STATE)),
@@ -57,6 +59,7 @@ def output_schema(document, layout):
     character = state["characters"]["items"]["properties"]
     character["character_id"]["enum"] = ids
     state["props"]["items"]["properties"]["holder"]["enum"] = ["", *ids]
+    schema["properties"]["clips"]["items"]["properties"]["shots"]["items"]["properties"]["speech_cues"]["items"]["properties"]["speaker"]["enum"] = ids
     return schema
 
 
@@ -152,7 +155,7 @@ def h3_reference_labels(draft, assets):
             return {field: normalize(item, field) for field, item in value.items()}
         if isinstance(value, list):
             return [normalize(item, key) for item in value]
-        if isinstance(value, str) and key not in {"id", "character_id", "holder", "name"}:
+        if isinstance(value, str) and key not in {"id", "speaker", "character_id", "holder", "name"}:
             return aliases.sub(replace, value)
         return value
 
@@ -161,7 +164,8 @@ def h3_reference_labels(draft, assets):
 
 def ltx_prompt(generated, clip, layout, draft, names, cameras):
     """Render LTX prose without timing tables, attachment tokens or internal IDs."""
-    labels = {key: re.sub(r" \[[A-Za-z0-9_-]+\]$", "", value) for key, value in names.items()}
+    labels = speech.prose_labels(names)
+    prose_mapping = {names[key]: label for key, label in labels.items()}
     boundaries = {item["id"]: item["state"] for item in draft["boundaries"]}
     bridges = {item["id"]: item for item in draft["handoffs"]}
 
@@ -175,7 +179,7 @@ def ltx_prompt(generated, clip, layout, draft, names, cameras):
         return " ".join(parts)
 
     def sentence(value):
-        return value.rstrip(" .") + "."
+        return speech.replace_labels(value.rstrip(" ."), prose_mapping) + "."
 
     parts = [sentence(generated["context"])]
     incoming = next((h for h in layout.get("handoffs", []) if h["to_clip"] == clip["id"]), None)
@@ -203,10 +207,13 @@ def ltx_prompt(generated, clip, layout, draft, names, cameras):
         for line_index, line in enumerate(planned["source"]["dialogue"]):
             if not line["text"]:
                 continue
-            parts.append(sentence(directed["speech_cues"][line_index]))
+            cue = directed["speech_cues"][line_index]
+            actor = labels[line["speaker"]]
+            parts.append(speech.performance(actor, cue))
             delivery = directed["deliveries"][line_index]
-            parts.append(f"{labels[line['speaker']]} says in {language(line['text'], directed['dialogue_language'])}"
+            parts.append(f"{actor} {speech.speech_verb(cue)} in {language(line['text'], directed['dialogue_language'])}"
                          + (f", {delivery.rstrip(' .')}" if delivery else "") + f': "{line["text"]}"')
+            parts.append(speech.listeners(actor, cue))
         if planned.get("exit_boundary_id"):
             parts.append("The action continues through this state: " + state_text(planned["exit_boundary_id"]))
     if "content_duration" in clip:
@@ -233,6 +240,10 @@ def assemble(document, layout, draft, profile, assets):
     if [c["id"] for c in draft["clips"]] != [c["id"] for c in layout["clips"]]:
         raise ValidationError("변환 결과의 클립 수 또는 순서가 원본 계획과 다릅니다.")
     names = render_labels(document)
+    identities = speech.bindings(document, names, assets)
+    identity_by_id = {item["speaker"]: item for item in identities}
+    if profile and profile["id"] == "minimax-h3-reference":
+        draft = speech.reference_prose(draft, identities)
     if [h["id"] for h in draft["handoffs"]] != [h["id"] for h in layout.get("handoffs", [])]:
         raise ValidationError("handoffs: return every planned handoff once, in plan order")
     for handoff in draft["handoffs"]:
@@ -293,19 +304,19 @@ def assemble(document, layout, draft, profile, assets):
         for field in ("context", "subject_definitions", "summary", "retention_analysis", "overall_soundscape", "non_diegetic_music"):
             require_english(generated[field], f"clips.{clip['id']}.{field}")
         for index, directed in enumerate(generated["shots"]):
+            speech.validate_cues(directed, clip["shots"][index], identities,
+                                 f"clips.{clip['id']}.shots[{index}]")
             for field, value in directed["camera"].items():
                 require_english(value, f"clips.{clip['id']}.shots[{index}].camera.{field}")
                 if not value.strip():
                     raise ValidationError(f"clips.{clip['id']}.shots[{index}].camera.{field}: explicit camera instruction required")
             require_english(directed["direction"], f"clips.{clip['id']}.shots[{index}].direction")
             require_english(directed["dialogue_language"], f"clips.{clip['id']}.shots[{index}].dialogue_language")
-            fragments.extend(directed["deliveries"] + directed["speech_cues"])
+            fragments.extend(directed["deliveries"] + [c["onset"] for c in directed["speech_cues"]])
             for line_index, delivery in enumerate(directed["deliveries"]):
                 require_english(delivery, f"clips.{clip['id']}.shots[{index}].deliveries[{line_index}]")
             for line_index, cue in enumerate(directed["speech_cues"]):
-                require_english(cue, f"clips.{clip['id']}.shots[{index}].speech_cues[{line_index}]")
-                if not cue.strip():
-                    raise ValidationError("speech_cues: one concrete English onset cue per assigned dialogue line required")
+                require_english(cue["onset"], f"clips.{clip['id']}.shots[{index}].speech_cues[{line_index}].onset")
         # Explicit dialogue syntax is owned by this renderer, never the model.
         if any(re.search(r"</?d>|\(S\d+\)|\{[^{}]*\}", text) for text in fragments):
             raise ValidationError("AI 연출에 대사 문법이 포함되었습니다. 대사는 프로그램이 삽입해야 합니다.")
@@ -359,20 +370,27 @@ def assemble(document, layout, draft, profile, assets):
                     speakers[speaker] = len(speakers) + 1
                 spoken_language = language(line["text"], directed["dialogue_language"])
                 attribution = names[speaker]
+                identity = identity_by_id[speaker]
+                if h3 and profile["mode"] == "reference":
+                    attribution = identity["subject"]
+                elif seedance and identity["pictures"]:
+                    attribution += " (appearance from " + ", ".join(identity["pictures"]) + ")"
                 translated_delivery = directed["deliveries"][line_index - 1]
                 if line["delivery"] and not translated_delivery.strip():
                     raise ValidationError(f"clips.{clip['id']}.{planned['id']}.deliveries: missing delivery translation")
                 if not line["delivery"] and translated_delivery:
                     raise ValidationError(f"clips.{clip['id']}.{planned['id']}.deliveries: do not invent delivery instructions")
                 delivery = f" Delivery: {translated_delivery}." if translated_delivery else ""
-                body.append("Speech onset: " + directed["speech_cues"][line_index - 1])
+                cue = directed["speech_cues"][line_index - 1]
+                body.append(speech.performance(attribution, cue))
                 if h3:
-                    speech = f"(S{speakers[speaker]}) {attribution}.{delivery} <d>[{spoken_language}] {line['text']}</d>"
+                    spoken = f"{attribution} (S{speakers[speaker]}) {speech.speech_verb(cue)}.{delivery} <d>[{spoken_language}] {line['text']}</d>"
                 elif seedance:
-                    speech = f"{attribution} says in {spoken_language}.{delivery} {{{line['text']}}}"
+                    spoken = f"{attribution} {speech.speech_verb(cue)} in {spoken_language}.{delivery} {{{line['text']}}}"
                 else:
-                    speech = f"{attribution} says in {spoken_language}.{delivery} {line['text']}"
-                body.append(speech)
+                    spoken = f"{attribution} {speech.speech_verb(cue)} in {spoken_language}.{delivery} {line['text']}"
+                body.append(spoken)
+                body.append(speech.listeners(attribution, cue))
                 original_index = planned.get("dialogue_indices", list(range(1, len(planned["source"]["dialogue"]) + 1)))[line_index - 1]
                 manifest.append({"clip_id": clip["id"], "shot_id": planned["id"], "line": original_index,
                                  "speaker": speaker, "language": spoken_language, "text": line["text"]})
@@ -414,15 +432,21 @@ def assemble(document, layout, draft, profile, assets):
                                    if c["id"] == item["character_id"])
             identity = f"<Subject {character_index}> " if h3 else ""
             refs.append(f"{identity}{names[item['character_id']]} — {item['label']}; "
-                        f"reference role: {item['role']}. {translated['note']}")
+                        f"reference role: {item['role']}. "
+                        + (ROLE_GUIDANCE[item['role']] + " " if not item["note"].strip() else "")
+                        + translated["note"])
         if ltx:
             prompt = ltx_prompt(generated, clip, layout, draft, names, cameras)
         elif h3:
+            # Define every character even when only some have reference images.
+            cast = [f"{item['subject']} is {item['label']}." for item in identities]
             values = {"subject_definitions": "\n".join(refs + [generated["subject_definitions"]]),
                       "summary": generated["summary"], "retention_analysis": generated["retention_analysis"],
                       "detailed_description": description, "integrated_multimodal_description": description,
                       "overall_soundscape": generated["overall_soundscape"] or "N/A",
                       "non_diegetic_music": generated["non_diegetic_music"] or "N/A"}
+            if profile["mode"] == "reference":
+                values["subject_definitions"] = "\n".join(cast + refs + [generated["subject_definitions"]])
             prompt = "\n\n".join(f"{heading}\n{values[heading]}" for heading in profile["sections"])
         else:
             prompt = "\n\n".join([*refs, description,

@@ -105,6 +105,7 @@ main { padding-top: 24px; }
 .reference-upload{min-width:0}.reference-upload input{max-width:100%}
 .reference-card{display:grid;grid-template-columns:130px minmax(0,1fr);gap:20px;padding:18px 0;border-top:1px solid #d9ddd4}
 .reference-card img{width:130px;height:160px;object-fit:contain;background:#f1f2ec;border-radius:8px}
+.reference-filename{overflow-wrap:anywhere}.reference-controls>label{margin-bottom:6px}.reference-extra{margin:12px 0}.reference-extra>summary{cursor:pointer;color:var(--green);font-size:12px;padding:6px 0;min-height:36px}.reference-extra label{margin-top:10px}.reference-extra[open]{border-top:1px solid var(--line)}
 .reference-controls{min-width:0}.reference-controls p{overflow-wrap:anywhere}
 .guide-link{display:inline-block;padding:7px 0;text-decoration:underline;text-underline-offset:3px;overflow-wrap:anywhere}
 .guide-sources{list-style:none;margin:8px 0 20px;padding:0}

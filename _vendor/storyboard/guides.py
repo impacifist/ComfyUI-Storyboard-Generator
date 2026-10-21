@@ -25,6 +25,7 @@ def assembly_rules():
             (ROOT / "clip-flow.md").read_text(encoding="utf-8") + "\n\n" +
             (ROOT / "anime-direction.md").read_text(encoding="utf-8") + "\n\n" +
             (ROOT / "action-causality.md").read_text(encoding="utf-8") + "\n\n" +
+            (ROOT / "reference-roles.md").read_text(encoding="utf-8") + "\n\n" +
             (ROOT / "camera-techniques.ko.md").read_text(encoding="utf-8"))
 
 
@@ -55,7 +56,8 @@ def profile(key):
                    "The renderer inserts original-language dialogue and assigns speakers by vocal appearance. "
                    "Separate ambient sound from non-diegetic music; N/A if absent.")
         if mode == "reference":
-            system += (" Define <Subject N> once per character and associate its character-reference <Picture N> assets. "
+            system += (" Use the exact Subject labels in character_bindings; never renumber them by appearance or reference order. "
+                       "Define <Subject N> once per character and associate its character-reference <Picture N> assets. "
                        "Environment references describe locations and must not be assigned to a character Subject. "
                        "Use attachment tokens exactly as <Picture 1>, <Picture 2>, etc. everywhere, including "
                        "subject_definitions, retention_analysis and reference notes; never use Image N. "

@@ -25,6 +25,8 @@ The official ComfyUI image-to-video template takes its source through LoadImage.
 
 ## Application contract
 
+Speaker binding updated: 2026-10-21. The application binds each quoted line and its performance cue to the exact original speaker. It writes the character identity immediately before speech, distinguishes visible/off-screen speech and approved voiceover, and keeps listeners from lip-syncing another character's words. This is an application safeguard, not a guarantee of generated video performance. H3 Subject/speaker tags are never imported into LTX prose.
+
 The 4–15-second planner range is this application's current policy, not a claimed LTX model maximum. Start images are connected separately for each clip; this release does not transfer images into LTX nodes or provide multi-image identity conditioning. The converter cannot inspect an opening image. Use reference notes and the approved storyboard as descriptive context only.
 
 Original dialogue is inserted by the application, never rewritten by the conversion LLM. All other rendered instructions remain English. Clip splits preserve the existing handoff and shared-state contracts, without exposing their internal IDs as shot directions. A new generation request must not introduce an automatic pause, scene ending or camera reset.

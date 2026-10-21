@@ -75,6 +75,27 @@ class AddonTests(unittest.TestCase):
         self.assertNotIn("API_KEY", encoded)
         self.assertEqual(value["projects"][0]["id"], self.board)
 
+    def test_source_speakers_survive_each_model_and_portable_string_output(self):
+        ids = [c["id"] for c in self.document["brief"]["characters"]]
+        original = copy.deepcopy(self.document)
+        self.document["story"]["shots"][0]["dialogue"] = [
+            {"speaker": ids[1], "text": "First speaker.", "delivery": ""},
+            {"speaker": ids[0], "text": "Second speaker.", "delivery": ""}]
+        self.board = service.dispatch("/library/save", {"document": self.document})["saved"]["id"]
+        self.payload["id"] = self.board
+        for target in ("minimax-h3-text", "seedance-2-text", "ltx-2.5-text", "ltx-2.5-image"):
+            with self.subTest(target=target):
+                self.payload["guide_id"] = target
+                result = self.compile()
+                clip = service.dispatch("/bundle/" + result["id"])["clips"][0]
+                self.assertIn("Character 2", clip["prompt"])
+                self.assertIn("Character 1", clip["prompt"])
+                self.assertIn("without speaking or lip-syncing it", clip["prompt"])
+                snapshot = clip_snapshot.encode_snapshot(clip)
+                with patch.object(service.providers, "generate_json", side_effect=AssertionError("No queue-time AI")):
+                    self.assertEqual(nodes.StoryboardClipPrompt().output_clip(snapshot)[0], clip["prompt"])
+        self.assertEqual(original["brief"], self.document["brief"])
+
     def test_invalid_snapshots_fail_before_any_output(self):
         clip = service.dispatch("/bundle/" + self.compile()["id"])["clips"][0]
         for key, bad in (("duration", 16), ("duration", float("nan")), ("clip_id", "../../key"), ("prompt", ""), ("source_shots", [])):

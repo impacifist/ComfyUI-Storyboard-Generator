@@ -1156,7 +1156,16 @@ window.addEventListener("languagechange", () => {
   if (previewDocument) renderSavedPreview();
 });
 let guideCatalog = [], referenceItems = [], previewDocument = null;
-const referenceRoles = {face: "얼굴", body: "전신", outfit: "의상", expression: "표정", detail: "세부 특징", environment: "배경 구조"};
+const referenceRoles = {appearance: "전체 외형 그대로", face: "얼굴·머리만", outfit: "의상·액세서리만", expression: "표정만", body: "체형·비율만", detail: "직접 지정한 부분만", environment: "이 장소의 공간 구조"};
+const referenceHelp = {
+  appearance: "얼굴, 머리, 의상과 색상을 함께 참고합니다. 처음에는 이 설정이면 됩니다.",
+  face: "얼굴과 머리만 참고합니다. 의상은 콘티나 별도의 의상 이미지를 따릅니다.",
+  outfit: "옷과 액세서리만 참고합니다. 인물의 얼굴은 바꾸지 않습니다.",
+  expression: "표정만 참고합니다. 얼굴의 정체성과 의상은 유지합니다.",
+  body: "체형과 비율만 참고합니다. 포즈와 행동은 콘티를 따릅니다.",
+  detail: "아래 추가 설명에 참고할 부분을 적어주세요. 예: 왼쪽 머리의 파란 리본.",
+  environment: "좌석, 문, 창문과 통로 등 공간 배치를 참고합니다. 이미지 속 사람은 인물로 사용하지 않습니다.",
+};
 
 function readOnlyField(container, label, value) {
   container.append(el("h4", "", tr(label)), el("pre", "source-text", sourceText(value)));
@@ -1270,6 +1279,7 @@ function applyGuide(reset = true) {
 function renderReferences() {
   const characters = $("#reference-characters"), backgrounds = $("#reference-background"), list = $("#reference-list");
   characters.replaceChildren(); backgrounds.replaceChildren(); list.replaceChildren();
+  $("#reference-count").textContent = tr("선택한 이미지 {0}/9장", {0: referenceItems.length});
   if (!conversionBoard) return;
   for (const character of [...conversionBoard.brief.characters, {id: "", name: tr("배경")}]) {
     const background = character.id === "";
@@ -1301,15 +1311,30 @@ function renderReferences() {
     const background = item.role === "environment";
     const name = background ? tr("배경") : conversionBoard.brief.characters.find((c) => c.id === item.character_id)?.name || item.character_id;
     const tag = $("#video-family").value === "minimax" ? `<Picture ${index + 1}>` : `Image ${index + 1}`;
-    controls.append(el("strong", "", `${tag} · ${name}`), el("p", "helper", item.name));
-    const roleLabel = el("label", "", tr("참조 용도")), role = el("select");
-    for (const [value, label] of Object.entries(referenceRoles).filter(([value]) => background ? value === "environment" : value !== "environment")) { const option = el("option", "", tr(label)); option.value = value; role.append(option); }
+    controls.append(el("strong", "", `${index + 1}. ${name}`), el("p", "helper reference-filename", item.name));
+    const roleLabel = el("label", "", tr("이 이미지에서 무엇을 사용할까요?")), role = el("select");
+    const advancedOptions = el("optgroup"); advancedOptions.label = tr("더 세밀한 지정");
+    for (const [value, label] of Object.entries(referenceRoles).filter(([value]) => background ? value === "environment" : value !== "environment")) {
+      const option = el("option", "", tr(label)); option.value = value;
+      (["body", "detail"].includes(value) ? advancedOptions : role).append(option);
+    }
+    if (advancedOptions.children.length) role.append(advancedOptions);
     role.value = item.role;
-    const noteLabel = el("label", "", tr("참조할 특징 설명")), note = el("textarea"); note.rows = 2; note.maxLength = 1000; note.value = item.note;
+    const help = el("p", "helper reference-role-help", tr(referenceHelp[item.role]));
+    const extra = el("details", "reference-extra"); extra.open = !!item.note.trim() || item.role === "detail";
+    extra.append(el("summary", "", tr("추가 설명 · 선택 사항")));
+    const noteLabel = el("label", "", tr("특별히 유지하거나 제외할 부분")), note = el("textarea"); note.rows = 2; note.maxLength = 1000; note.value = item.note;
+    note.placeholder = background ? tr("예: 좌석은 창문 아래, 출입문은 왼쪽. 다른 각도에서도 이 배치를 유지.") : tr("예: 파란 머리핀은 유지. 의상은 콘티에 적은 교복을 사용.");
     const changed = () => { invalidateConversion(); $("#conversion-consent").checked = false; };
-    role.addEventListener("change", () => { item.role = role.value; changed(); });
+    role.addEventListener("change", () => {
+      item.role = role.value; help.textContent = tr(referenceHelp[item.role]);
+      if (item.role === "detail") extra.open = true;
+      changed();
+    });
     note.addEventListener("input", () => { item.note = note.value; changed(); });
-    roleLabel.append(role); noteLabel.append(note); controls.append(roleLabel, noteLabel);
+    roleLabel.append(role); noteLabel.append(note);
+    extra.append(noteLabel, el("p", "helper reference-attachment", tr("영상에 첨부할 순서: {0} · 모델 표기: {1}", {0: index + 1, 1: tag})));
+    controls.append(roleLabel, help, extra);
     const buttons = el("div", "header-actions");
     for (const [label, delta] of [["앞으로", -1], ["뒤로", 1], ["목록에서 제외", 0]]) {
       const button = el("button", "quiet", tr(label));
