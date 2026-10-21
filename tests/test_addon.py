@@ -96,6 +96,26 @@ class AddonTests(unittest.TestCase):
                     self.assertEqual(nodes.StoryboardClipPrompt().output_clip(snapshot)[0], clip["prompt"])
         self.assertEqual(original["brief"], self.document["brief"])
 
+    def test_four_reference_kinds_compile_into_portable_string_nodes(self):
+        png = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+aD1sAAAAASUVORK5CYII="
+        images = []
+        for kind in ("character", "background", "prop", "other"):
+            image = service.dispatch("/references/upload", {"id": self.board, "kind": kind, "data": png, "name": "sample.png",
+                "character_id": self.document["brief"]["characters"][0]["id"] if kind == "character" else "",
+                "target_name": "Phone" if kind == "prop" else "Lighting" if kind == "other" else "",
+                "note": "Use only the warm lighting." if kind == "other" else ""})["asset"]
+            images.append(image)
+        saved = service.dispatch("/references/save", {"id": self.board, "references": images})["references"]
+        self.assertEqual([a["kind"] for a in saved], ["character", "background", "prop", "other"])
+        for target in ("minimax-h3-reference", "seedance-2-reference"):
+            self.payload.update(guide_id=target, references=saved)
+            result = self.compile()
+            clip = service.dispatch("/bundle/" + result["id"])["clips"][0]
+            self.assertIn("Prop 1 (Phone)", clip["prompt"])
+            self.assertIn("Visual reference 1 (Lighting)", clip["prompt"])
+            with patch.object(service.providers, "generate_json", side_effect=AssertionError("No extra AI")):
+                self.assertEqual(nodes.StoryboardClipPrompt().output_clip(clip_snapshot.encode_snapshot(clip))[0], clip["prompt"])
+
     def test_invalid_snapshots_fail_before_any_output(self):
         clip = service.dispatch("/bundle/" + self.compile()["id"])["clips"][0]
         for key, bad in (("duration", 16), ("duration", float("nan")), ("clip_id", "../../key"), ("prompt", ""), ("source_shots", [])):

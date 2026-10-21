@@ -33,6 +33,7 @@ body.comfy-workbench { font: 13px/1.55 "Segoe UI", "Malgun Gothic", system-ui, s
 .comfy-workbench :is(.quiet, .text-button) { color: #c5cad4; }
 .comfy-workbench :is(.quiet, .text-button):hover { background: #272c35; }
 .comfy-workbench .secondary { background: #20242c; color: var(--ink); border: 1px solid var(--line); }
+.comfy-workbench .reference-kind-picker .secondary[aria-pressed="true"] { background: var(--accent); color: var(--bg); border-color: var(--accent); transition: none; }
 .comfy-workbench .secondary:hover { background: #2c323d; border-color: #535b6b; }
 .comfy-workbench .primary { background: #cf7752; border: 1px solid #df916d; color: #111318; font-weight: 650; box-shadow: none; }
 .comfy-workbench .primary:hover { background: #df8861; }

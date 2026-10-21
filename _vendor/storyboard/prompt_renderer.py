@@ -5,7 +5,7 @@ import re
 import unicodedata
 
 from .references import ROLE_GUIDANCE
-from . import speech
+from . import references, speech
 from .schema import CHAR_STATE, NUMBER, TEXT, ValidationError, array, obj, validate
 
 DIRECTION_STATE = obj(characters=array(CHAR_STATE),
@@ -18,7 +18,7 @@ DIRECTOR_OUTPUT = obj(clips=array(obj(
                     dialogue_language=TEXT, deliveries=array(TEXT))),
     overall_soundscape=TEXT, non_diegetic_music=TEXT)), boundaries=array(obj(id=TEXT, state=DIRECTION_STATE)),
     handoffs=array(obj(id=TEXT, bridge=TEXT, sound_bridge=TEXT)),
-    reference_notes=array(obj(label=TEXT, note=TEXT)),
+    reference_notes=array(obj(label=TEXT, note=TEXT, target_name=TEXT)),
     warnings=array(TEXT), notes=array(TEXT))
 
 
@@ -125,7 +125,10 @@ def export_text(result):
         notes = {r["label"]: r["note"] for r in result["english_reference_notes"]}
         for item in result["references"]:
             note = notes[item["label"]]
-            owner = "Background" if item["role"] == "environment" else result["render_labels"][item["character_id"]]
+            item_kind = references.kind(item)
+            translated = next(r for r in result["english_reference_notes"] if r["label"] == item["label"])
+            owner = ("Background" if item_kind == "background" else result["render_labels"][item["character_id"]]
+                     if item_kind == "character" else translated.get("target_name") or item_kind.title())
             lines.append(f"{item['order']}. {item['label']} | {owner} | {item['role']}"
                          + (f" | {note}" if note else ""))
         lines.append("")
@@ -242,8 +245,10 @@ def assemble(document, layout, draft, profile, assets):
     names = render_labels(document)
     identities = speech.bindings(document, names, assets)
     identity_by_id = {item["speaker"]: item for item in identities}
+    reference_targets = references.target_bindings(assets, len(identities))
+    target_by_id = {item["target_id"]: item for item in reference_targets}
     if profile and profile["id"] == "minimax-h3-reference":
-        draft = speech.reference_prose(draft, identities)
+        draft = speech.reference_prose(draft, identities + [g for g in reference_targets if g["subject"]])
     if [h["id"] for h in draft["handoffs"]] != [h["id"] for h in layout.get("handoffs", [])]:
         raise ValidationError("handoffs: return every planned handoff once, in plan order")
     for handoff in draft["handoffs"]:
@@ -256,7 +261,10 @@ def assemble(document, layout, draft, profile, assets):
         raise ValidationError("reference_notes: return every reference label once, in manifest order")
     for index, reference in enumerate(draft["reference_notes"]):
         require_english(reference["note"], f"reference_notes[{index}].note")
-        if re.search(r"</?d>|\(S\d+\)|\{[^{}]*\}", reference["note"]):
+        require_english(reference["target_name"], f"reference_notes[{index}].target_name")
+        if references.kind(assets[index]) in ("prop", "other") and not reference["target_name"].strip():
+            raise ValidationError(f"reference_notes[{index}].target_name: English target name required")
+        if any(re.search(r"</?d>|\(S\d+\)|\{[^{}]*\}", reference[field]) for field in ("note", "target_name")):
             raise ValidationError("reference_notes.note: dialogue syntax is forbidden")
     for index, note in enumerate(draft["notes"]):
         require_english(note, f"notes[{index}]")
@@ -420,8 +428,26 @@ def assemble(document, layout, draft, profile, assets):
         for item, translated in zip(assets, draft["reference_notes"]):
             if item["note"] and not translated["note"].strip():
                 raise ValidationError("reference_notes.note: missing English reference translation")
+            applicable = [i for i, s in enumerate(clip["shots"], 1) if references.applies(item, s["id"])]
+            if not applicable:
+                refs.append(f"{item['label']} is not used in this clip. Do not apply its appearance or contents here.")
+                continue
+            scope_text = ("Apply only in " + ", ".join(f"[Shot {i}]" for i in applicable)
+                          + "; do not apply it in other shots. ") if item.get("shot_ids") else ""
+            item_kind = references.kind(item)
+            if item_kind in ("prop", "other"):
+                target = target_by_id[references.target_key(item)]
+                identity = target["subject"] + " " if h3 and target["subject"] else ""
+                # One target may have several images; numbering never creates another object or voice.
+                target_name = next(r["target_name"] for a, r in zip(assets, draft["reference_notes"])
+                                   if references.target_key(a) == target["target_id"])
+                refs.append(f"{identity}{target['label']} ({target_name}) — {item['label']}; {item_kind} reference. "
+                            + scope_text + ROLE_GUIDANCE[item["role"]] + " " + translated["note"]
+                            + (f" Associated character: {names[target['owner_id']]}. Ownership follows the approved shot states, not this association."
+                               if target["owner_id"] else ""))
+                continue
             if item["role"] == "environment":
-                refs.append(f"Background — {item['label']}; environment reference. {translated['note']} "
+                refs.append(f"Background — {item['label']}; environment reference. {scope_text}{translated['note']} "
                             "Use this reference for the matching location's architecture and spatial layout. "
                             "Preserve the relative positions of seats, doors, windows, aisles and fixed landmarks "
                             "across shots and clips, including reverse angles. Change viewpoint, not the set geometry. "
@@ -433,6 +459,7 @@ def assemble(document, layout, draft, profile, assets):
             identity = f"<Subject {character_index}> " if h3 else ""
             refs.append(f"{identity}{names[item['character_id']]} — {item['label']}; "
                         f"reference role: {item['role']}. "
+                        + scope_text
                         + (ROLE_GUIDANCE[item['role']] + " " if not item["note"].strip() else "")
                         + translated["note"])
         if ltx:

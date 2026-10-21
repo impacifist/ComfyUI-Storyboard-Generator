@@ -1,6 +1,6 @@
 {
   "repository": "https://github.com/impacifist/ai-video-storyboard-generator",
-  "commit": "ea8cb2892ed640ad6b3aae0c970ab86fd115b518",
+  "commit": "323e662bcc39cd98856da7f080c60a6cd24b72db",
   "files": {
     "docs/guides/action-causality.md": "dac6eab879edaed57f7fe091db454148e2c96453bd80301d0292a67b21c84f32",
     "docs/guides/anime-direction.md": "fc306c2393807643dd64d7d7aec33530c098212f9a58002c8d74a2ca84205d84",
@@ -14,7 +14,7 @@
     "docs/guides/ltx-system.md": "f42d656ad3629a094c9c0eba0cc717fb80184dd370039077385889f0377a0b4f",
     "docs/guides/minimax-animation-direction.md": "cb29d35b5894b3d1f30cc09c16a2ebed9bd8433caeef4a981fb3c3787091a391",
     "docs/guides/minimax-h3.md": "984f357d13c8f2d3ecbbfe5aa0249642acab9f30821541e26fcc6110e5109992",
-    "docs/guides/reference-roles.md": "506d2db67b4b8b34003c8e059d849684a37fc117d6cd64579549a3d76cb2ef40",
+    "docs/guides/reference-roles.md": "247cebaa2adf58a0510ecde8fc3d5a4814775cee784cdc472bd9a43dc61dcc88",
     "docs/guides/seedance-2.0.md": "5dbe8ecc8ada6d28abd8c927ae1b2c8e3bfaaa93ddfb5f257ea819af9a4cf8ac",
     "docs/guides/storyboard-direction-research.md": "30dca11e2f38ebbb60993686339b65b33df83c3a990ec63de5de7c8f9c97868b",
     "docs/guides/storyboard-direction.md": "91ccab4bc0f0e8e2f4131c578ae5e3c145a937afd670d8f18ff7016be37d0f25",
@@ -23,22 +23,22 @@
     "storyboard/batch_generation.py": "9203bf670052dbd032a91f8ff6536bb35a210f8708ec21a477e07a41eb4f1ead",
     "storyboard/clip_flow.py": "a6638d5b6478173e897bedf341b26e56acb2514582dfcd181b4ecfe482fa61c9",
     "storyboard/clip_planning.py": "c288f471a36fb19f4b73ac31cf2d0ae4df184c983d911694d778b06966b6f2a2",
-    "storyboard/conversion.py": "4ee86682035081e3f8c0ccbc996c00634154bf10b7264b9a5f426239889d01ef",
+    "storyboard/conversion.py": "b30fea0c167d01bcb5a3a97c8c418e52372cfc56171b2e0014e7999c4074b6b5",
     "storyboard/diagnostics.py": "5e6d36d2ec73875166025e7e88cb09a33f354b0b397b544a5eaa5fe88b2516f0",
     "storyboard/dialogue.py": "cdb5664039a02fdb9890d57fe7a3953e1d71904c91a269f55f563a8b951abc13",
     "storyboard/engine.py": "63d0772c9fb0624948ab6bc9b2debf4f451cb753116f59b8c0fa8901907272d3",
     "storyboard/guides.py": "4dfcfc2dc671ad16c50c2277e9b3c88a5e2a5270d6f65290d7e3df7514b40b17",
     "storyboard/library.py": "9288cf313499094da53e2a6dc8054137cdc95275c6131d61d5c4f2f3275fed66",
-    "storyboard/prompt_renderer.py": "26bb9d69034a88ae44ff47a71ec70281d50b8b607433b737e05b9f1ded043e5c",
+    "storyboard/prompt_renderer.py": "0c4db3c9cf2c5409aa5dd0fb4c6accf620bb7d502616106f4679864351ec1eb0",
     "storyboard/providers.py": "ef3898251bc23842fce78bc58d880cb376384da2ee9ce70f7225c7ed4f8021f6",
-    "storyboard/references.py": "953e68a1d11a72ced9e52bac5550cdb8d99d9678ef95cb8f3e8006d90892ec1f",
+    "storyboard/references.py": "585e85594da8728aaefcc90b972c4e1e850cdc2793eca8d64bda9efe787a8966",
     "storyboard/schema.py": "8b0cc324d969886667bb22bf8247c077a3a2451bf4bfbd53035773344587e16a",
     "storyboard/speech.py": "f46aa15022884c1737c98d762c1bb2ce9ff7c4ff64f7f4bb3253cc5b86d7406f",
-    "web/app.js": "e61f453b8bb485778764f7e84f6ea36f5bdc887be8d65bb324f598560324a2c6",
+    "web/app.js": "e9d5e540d6463586c5e04a9ad76b3550bbc23c06f5fc95f9a4e5f24990602df5",
     "web/diagnostics.js": "d0b54996e412d4f4c001018a808b543ddcb7adf9e9ab38ac2025e3b449291f4d",
     "web/i18n.js": "ffa4abf3e23f66dffb5ea21ced8c28280b6841ff01b3c4f4ba58865875143b77",
-    "web/index.html": "38b349b18db9f7efa7a36d2fd8e6f1c3fbc64dfa8752c3b754214759adec037a",
-    "web/style.css": "d89d80d7a70190be1b54e5a4e99608e6409e5acb6872d774f9a0f495d5bba7fe",
-    "web/translations.js": "2d3e16a5619403201e7f0e995b71824a1b3709ef2de2c4f801a35df27006e179"
+    "web/index.html": "a86a17a235a5a3ae2c0bed52c855a56512df595e0a267de9a306e5c07049cbaf",
+    "web/style.css": "edcb084a24324e31940b884b5ff2533c94f58db9c1ca4b6948868f9c0c77704a",
+    "web/translations.js": "b738a03ae1a040ad190e048d3593b13a6d95ad582cdc47777edb9664764f1203"
   }
 }

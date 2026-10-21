@@ -56,6 +56,8 @@ The screenshot uses **PreviewAny** to demonstrate a real STRING connection witho
 
 **Choose clip** reassigns an existing node while keeping its wires. Prompt copies travel with the saved workflow, and queue execution does not call the LLM again. Attach character and background reference images to the video-generation nodes separately, in the reference manifest's order. This addon prepares prompts; your video workflow handles rendering and joining clips.
 
+In H3/Seedance reference mode, **Add references** offers **Character, Background, Prop and Other**. Add several images to one target and optionally choose its shots. Props keep the original storyboard's holder and transfers; Other requires a short purpose such as lighting or palette. Images are still connected to the video workflow separately; the addon does not analyze or transfer them. LTX uses its existing starting-image mode.
+
 ## Use
 
 1. Open **Storyboard** using the video icon in ComfyUI's top action bar, or **Extensions → Storyboard**. Use the single navigation row: **Create**, **Library**, **Convert**, **Clip prompts**.

@@ -797,6 +797,7 @@ async function loadSaved(id, forConversion) {
     clearConversion();
     conversionBoardId = id; conversionBoard = result.document;
     referenceItems = result.references || [];
+    referenceTarget = ""; referenceDrafts = {};
     await ensureGuides();
     renderOverview($("#conversion-overview"), conversionBoard);
     renderReferences();
@@ -983,7 +984,7 @@ function renderConversion(result, date = "", remember = true, savedId = null) {
   downloads.append(textButton, exportButton);
   if (result.references?.length) {
     const list = el("ol", "reference-manifest");
-    for (const item of result.references) list.append(el("li", "", `${item.label} · ${item.role === "environment" ? tr("배경") : item.character_id} · ${tr(referenceRoles[item.role])} · ${item.name} · ${item.note}`));
+    for (const item of result.references) list.append(el("li", "", `${item.label} · ${item.target_name || (item.role === "environment" ? tr("배경") : item.character_id)} · ${tr(referenceRoles[item.role])} · ${item.name} · ${item.note}`));
     const detail = el("details", "result-references"); detail.append(el("summary", "", tr("참조 이미지 첨부 순서")), list); section.append(detail);
   }
   if (savedId) {
@@ -1002,7 +1003,9 @@ function promptText(result) {
     lines.push("REFERENCE ATTACHMENT ORDER");
     for (const item of result.references) {
       const translated = result.english_reference_notes.find((note) => note.label === item.label);
-      lines.push(`${item.order}. ${item.label} | ${item.role === "environment" ? "Background" : result.render_labels[item.character_id]} | ${item.role}${translated.note ? ` | ${translated.note}` : ""}`);
+      const kind = referenceKindOf(item);
+      const owner = kind === "background" ? "Background" : kind === "character" ? result.render_labels[item.character_id] : translated.target_name || kind[0].toUpperCase() + kind.slice(1);
+      lines.push(`${item.order}. ${item.label} | ${owner} | ${item.role}${translated.note ? ` | ${translated.note}` : ""}`);
     }
     lines.push("");
   }
@@ -1084,7 +1087,8 @@ for (const selector of ["#clip-limit", "#target-model", "#guide-source", "#conve
   marker.setAttribute("aria-label", tr("필수 입력"));
   input.closest("label").insertBefore(marker, input);
 }
-document.querySelectorAll("label:not(.check)").forEach((label) => {
+function wrapRequiredLabels(root) {
+root.querySelectorAll("label:not(.check)").forEach((label) => {
   if (![...label.children].some((node) => node.classList.contains("required-mark"))) return;
   const caption = el("span", "field-label");
   for (const node of [...label.childNodes]) {
@@ -1092,6 +1096,8 @@ document.querySelectorAll("label:not(.check)").forEach((label) => {
   }
   label.prepend(caption);
 });
+}
+wrapRequiredLabels(document);
 
 function closeLanguageMenu(focus = false) {
   $("#language-menu").hidden = true;
@@ -1156,7 +1162,11 @@ window.addEventListener("languagechange", () => {
   if (previewDocument) renderSavedPreview();
 });
 let guideCatalog = [], referenceItems = [], previewDocument = null;
-const referenceRoles = {appearance: "전체 외형 그대로", face: "얼굴·머리만", outfit: "의상·액세서리만", expression: "표정만", body: "체형·비율만", detail: "직접 지정한 부분만", environment: "이 장소의 공간 구조"};
+let referenceKind = "character", referenceTarget = "", referenceDrafts = {};
+const referenceKinds = {character: "인물", background: "배경", prop: "소품", other: "그 외"};
+const referenceKindOf = (item) => item.kind || (item.role === "environment" ? "background" : "character");
+const referenceKey = (item) => item.target_id || (item.character_id ? `character:${item.character_id}` : "legacy-background");
+const referenceRoles = {appearance: "전체 외형 그대로", face: "얼굴·머리만", outfit: "의상·액세서리만", expression: "표정만", body: "체형·비율만", detail: "직접 지정한 부분만", environment: "이 장소의 공간 구조", prop: "소품의 외형과 세부 특징", other: "직접 지정한 참고 요소"};
 const referenceHelp = {
   appearance: "얼굴, 머리, 의상과 색상을 함께 참고합니다. 처음에는 이 설정이면 됩니다.",
   face: "얼굴과 머리만 참고합니다. 의상은 콘티나 별도의 의상 이미지를 따릅니다.",
@@ -1281,50 +1291,44 @@ function renderReferences() {
   characters.replaceChildren(); backgrounds.replaceChildren(); list.replaceChildren();
   $("#reference-count").textContent = tr("선택한 이미지 {0}/9장", {0: referenceItems.length});
   if (!conversionBoard) return;
-  for (const character of [...conversionBoard.brief.characters, {id: "", name: tr("배경")}]) {
-    const background = character.id === "";
-    const label = el("label", "reference-upload", background ? tr("배경 이미지 추가") : tr("{0} · 이미지 추가", {0: character.name}));
-    const input = el("input"); input.type = "file"; input.accept = "image/png,image/jpeg,image/webp"; input.multiple = true;
-    input.addEventListener("change", () => libraryAction(async () => {
-      const files = [...input.files];
-      if (referenceItems.length + files.length > 9) throw new Error(tr("캐릭터와 배경 참조 이미지는 합쳐서 9장 이내로 선택해주세요."));
-      for (const file of files) {
-        if (file.size > 5000000) throw new Error(tr("이미지 형식과 5MB 이하 크기를 확인해주세요."));
-      }
-      for (const file of files) {
-        const data = await new Promise((resolve, reject) => {
-          const reader = new FileReader(); reader.onload = () => resolve(reader.result); reader.onerror = () => reject(new Error(tr("이미지를 읽을 수 없습니다."))); reader.readAsDataURL(file);
-        });
-        const uploaded = await api("/api/references/upload", {id: conversionBoardId, character_id: character.id, kind: background ? "background" : "character", name: file.name, data});
-        referenceItems.push(uploaded.asset);
-        // Save after each upload so a subsequent failure cannot lose successful additions.
-        await api("/api/references/save", {id: conversionBoardId, references: referenceItems});
-      }
-      renderReferences(); invalidateConversion(); $("#conversion-consent").checked = false;
-    }));
-    label.append(input); (background ? backgrounds : characters).append(label);
-  }
+  renderReferenceComposer(characters);
+  const groups = new Map();
   referenceItems.forEach((item, index) => {
+    const kind = referenceKindOf(item), key = referenceKey(item);
+    const name = kind === "character" ? conversionBoard.brief.characters.find((c) => c.id === item.character_id)?.name || item.character_id : item.target_name || tr(referenceKinds[kind]);
+    if (!groups.has(key)) {
+      const group = el("details", "reference-group"); group.dataset.targetId = key; group.dataset.kind = kind;
+      group.open = referenceKind === kind && referenceTarget === (kind === "character" ? item.character_id : key);
+      const heading = el("summary", "section-heading"), add = el("button", "quiet", tr("이 대상에 이미지 추가"));
+      const count = referenceItems.filter((a) => referenceKey(a) === key).length;
+      heading.append(el("strong", "", `${tr(referenceKinds[kind])} · ${name}`), el("span", "helper", count === 1 ? tr("이미지 1장") : tr("이미지 {0}장", {0: count})), add);
+      add.addEventListener("click", (event) => {
+        event.preventDefault();
+        referenceKind = kind; referenceTarget = kind === "character" ? item.character_id : key;
+        renderReferences(); $("#reference-files").click();
+      });
+      group.append(heading, referenceScope(item)); list.append(group); groups.set(key, group);
+    }
     const card = el("article", "reference-card");
     const img = el("img"); img.src = `/api/references/image/${item.id}`; img.alt = item.name; img.loading = "lazy";
     const controls = el("div", "reference-controls");
-    const background = item.role === "environment";
-    const name = background ? tr("배경") : conversionBoard.brief.characters.find((c) => c.id === item.character_id)?.name || item.character_id;
+    const background = kind === "background";
     const tag = $("#video-family").value === "minimax" ? `<Picture ${index + 1}>` : `Image ${index + 1}`;
     controls.append(el("strong", "", `${index + 1}. ${name}`), el("p", "helper reference-filename", item.name));
     const roleLabel = el("label", "", tr("이 이미지에서 무엇을 사용할까요?")), role = el("select");
     const advancedOptions = el("optgroup"); advancedOptions.label = tr("더 세밀한 지정");
-    for (const [value, label] of Object.entries(referenceRoles).filter(([value]) => background ? value === "environment" : value !== "environment")) {
+    for (const [value, label] of Object.entries(referenceRoles).filter(([value]) => kind === "character" ? !["environment", "prop", "other"].includes(value) : value === item.role)) {
       const option = el("option", "", tr(label)); option.value = value;
       (["body", "detail"].includes(value) ? advancedOptions : role).append(option);
     }
     if (advancedOptions.children.length) role.append(advancedOptions);
     role.value = item.role;
-    const help = el("p", "helper reference-role-help", tr(referenceHelp[item.role]));
-    const extra = el("details", "reference-extra"); extra.open = !!item.note.trim() || item.role === "detail";
-    extra.append(el("summary", "", tr("추가 설명 · 선택 사항")));
+    const help = el("p", "helper reference-role-help", tr(referenceHelp[item.role] || (kind === "prop" ? "소품의 외형을 유지합니다. 위치와 소유자는 콘티를 따릅니다." : "지정한 요소만 참고하며 인물이나 행동을 추가하지 않습니다.")));
+    const extra = el("details", "reference-extra"); extra.open = !!item.note.trim() || item.role === "detail" || kind === "other";
+    extra.append(el("summary", "", tr(kind === "other" ? "참고할 내용 · 필수" : "추가 설명 · 선택 사항")));
     const noteLabel = el("label", "", tr("특별히 유지하거나 제외할 부분")), note = el("textarea"); note.rows = 2; note.maxLength = 1000; note.value = item.note;
-    note.placeholder = background ? tr("예: 좌석은 창문 아래, 출입문은 왼쪽. 다른 각도에서도 이 배치를 유지.") : tr("예: 파란 머리핀은 유지. 의상은 콘티에 적은 교복을 사용.");
+    note.required = kind === "other";
+    note.placeholder = background ? tr("예: 좌석은 창문 아래, 출입문은 왼쪽. 다른 각도에서도 이 배치를 유지.") : kind === "other" ? tr("예: 따뜻한 역광과 색감만 참고") : kind === "prop" ? tr("예: 검은 케이스와 별 모양 스티커 유지") : tr("예: 파란 머리핀은 유지. 의상은 콘티에 적은 교복을 사용.");
     const changed = () => { invalidateConversion(); $("#conversion-consent").checked = false; };
     role.addEventListener("change", () => {
       item.role = role.value; help.textContent = tr(referenceHelp[item.role]);
@@ -1346,8 +1350,111 @@ function renderReferences() {
         changed(); renderReferences();
       }); buttons.append(button);
     }
-    controls.append(buttons); card.append(img, controls); list.append(card);
+    controls.append(buttons); card.append(img, controls); groups.get(key).append(card);
   });
+  markRequired(list);
+  wrapRequiredLabels(list);
+}
+
+function referenceChanged() { invalidateConversion(); $("#conversion-consent").checked = false; }
+
+function referenceScope(item) {
+  const detail = el("details", "reference-scope"), summary = el("summary");
+  const label = el("label", "", tr("적용 범위")), mode = el("select");
+  for (const [value, text] of [["all", "관련된 모든 컷"], ["selected", "직접 컷 선택"]]) {
+    const option = el("option", "", tr(text)); option.value = value; mode.append(option);
+  }
+  mode.value = item.scope_mode || (item.shot_ids?.length ? "selected" : "all");
+  const choices = el("div", "reference-shot-choices"); choices.hidden = mode.value === "all";
+  const updateSummary = (ids) => { summary.textContent = mode.value === "all" ? tr("적용 범위: 관련된 모든 컷") : tr("적용 범위: 선택한 {0}개 컷", {0: ids.length}); };
+  updateSummary(item.shot_ids || []);
+  const setScope = (ids) => {
+    for (const image of referenceItems.filter((a) => referenceKey(a) === referenceKey(item))) {
+      image.shot_ids = ids; image.scope_mode = mode.value;
+    }
+    updateSummary(ids);
+    referenceChanged();
+  };
+  for (const shot of conversionBoard.story.shots) {
+    const checkLabel = el("label"), check = el("input"); check.type = "checkbox"; check.value = shot.id;
+    check.checked = !!item.shot_ids?.includes(shot.id);
+    check.addEventListener("change", () => setScope([...choices.querySelectorAll("input:checked")].map((input) => input.value)));
+    checkLabel.append(check, document.createTextNode(`${shot.id} · ${shot.purpose}`)); choices.append(checkLabel);
+  }
+  mode.addEventListener("change", () => {
+    choices.hidden = mode.value === "all";
+    if (mode.value === "selected" && !choices.querySelector("input:checked")) choices.querySelector("input").checked = true;
+    setScope(mode.value === "all" ? [] : [...choices.querySelectorAll("input:checked")].map((input) => input.value));
+  });
+  label.append(mode); detail.append(summary, label, choices); return detail;
+}
+
+function renderReferenceComposer(container) {
+  const picker = el("div", "reference-kind-picker"); picker.setAttribute("role", "group"); picker.setAttribute("aria-label", tr("레퍼런스 종류"));
+  for (const [kind, label] of Object.entries(referenceKinds)) {
+    const button = el("button", "secondary", tr(label)); button.dataset.referenceKind = kind;
+    button.setAttribute("aria-pressed", String(referenceKind === kind));
+    button.addEventListener("click", () => { referenceKind = kind; referenceTarget = ""; renderReferences(); });
+    picker.append(button);
+  }
+  const form = el("div", "reference-composer"), targetLabel = el("label", "", tr("적용 대상")), target = el("select"); target.id = "reference-target";
+  const groups = [...new Map(referenceItems.filter((a) => referenceKindOf(a) === referenceKind).map((a) => [referenceKey(a), a])).values()];
+  if (referenceKind === "character") {
+    for (const c of conversionBoard.brief.characters) { const option = el("option", "", c.name); option.value = c.id; target.append(option); }
+  } else {
+    const option = el("option", "", tr("새 대상 추가")); option.value = ""; target.append(option);
+    for (const group of groups) { const option = el("option", "", group.target_name || tr(referenceKinds[referenceKind])); option.value = referenceKey(group); target.append(option); }
+  }
+  if ([...target.options].some((o) => o.value === referenceTarget)) target.value = referenceTarget;
+  referenceTarget = target.value;
+  const group = groups.find((a) => referenceKind === "character" ? a.character_id === target.value : referenceKey(a) === target.value);
+  const draft = referenceDrafts[referenceKind] ||= {name: referenceKind === "background" ? conversionBoard.brief.location : "", owner: "", note: ""};
+  target.addEventListener("change", () => { referenceTarget = target.value; renderReferences(); });
+  targetLabel.append(target); form.append(targetLabel);
+  let nameInput, owner, usage;
+  if (referenceKind !== "character") {
+    const label = el("label", "", tr("대상 이름")); nameInput = el("input"); nameInput.id = "reference-target-name"; nameInput.maxLength = 100;
+    nameInput.required = ["prop", "other"].includes(referenceKind); nameInput.value = group ? group.target_name || "" : draft.name; nameInput.disabled = !!group;
+    nameInput.placeholder = tr(referenceKind === "other" ? "예: 조명 스타일" : "예: 소라의 휴대폰"); nameInput.addEventListener("input", () => { draft.name = nameInput.value; });
+    label.append(nameInput); form.append(label);
+  }
+  if (referenceKind === "prop") {
+    const label = el("label", "", tr("관련 인물 · 선택 사항")); owner = el("select"); owner.id = "reference-owner";
+    const option = el("option", "", tr("지정하지 않음")); option.value = ""; owner.append(option);
+    for (const c of conversionBoard.brief.characters) { const option = el("option", "", c.name); option.value = c.id; owner.append(option); }
+    owner.value = group?.owner_id || draft.owner; owner.disabled = !!group; owner.addEventListener("change", () => { draft.owner = owner.value; });
+    label.append(owner); form.append(label);
+  }
+  if (referenceKind === "other") {
+    const label = el("label", "", tr("무엇을 참고할까요?")); usage = el("textarea"); usage.id = "reference-usage"; usage.required = true; usage.maxLength = 1000;
+    usage.value = group?.note || draft.note; usage.placeholder = tr("예: 따뜻한 역광과 색감만 참고");
+    usage.addEventListener("input", () => { draft.note = usage.value; }); label.append(usage); form.append(label);
+  }
+  const upload = el("label", "reference-upload", tr("이미지 추가 · 여러 장 선택 가능")), input = el("input"); input.id = "reference-files";
+  input.type = "file"; input.accept = "image/png,image/jpeg,image/webp"; input.multiple = true;
+  input.addEventListener("change", () => libraryAction(async () => {
+    const uploadKind = referenceKind;
+    const files = [...input.files]; input.value = ""; if (!files.length) return;
+    if (referenceItems.length + files.length > 9) throw new Error(tr("레퍼런스 이미지는 종류에 관계없이 합쳐서 9장까지 추가할 수 있습니다."));
+    for (const field of [nameInput, usage].filter(Boolean)) if (!field.checkValidity() || (field.required && !field.value.trim())) { field.reportValidity(); throw new Error(tr("필수 항목을 입력해주세요.")); }
+    for (const file of files) if (file.size > 5000000) throw new Error(tr("이미지 형식과 5MB 이하 크기를 확인해주세요."));
+    let targetId = group ? referenceKey(group) : undefined;
+    try {
+      for (const file of files) {
+        const data = await new Promise((resolve, reject) => {
+          const reader = new FileReader(); reader.onload = () => resolve(reader.result); reader.onerror = () => reject(new Error(tr("이미지를 읽을 수 없습니다."))); reader.readAsDataURL(file);
+        });
+        const result = await api("/api/references/upload", {id: conversionBoardId, kind: uploadKind,
+          character_id: uploadKind === "character" ? target.value : "", target_id: targetId,
+          target_name: nameInput?.value || "", owner_id: owner?.value || "", note: usage?.value || "",
+          shot_ids: group?.shot_ids || [], name: file.name, data});
+        targetId = result.asset.target_id; referenceItems.push(result.asset);
+        await api("/api/references/save", {id: conversionBoardId, references: referenceItems});
+      }
+      referenceTarget = uploadKind === "character" ? target.value : targetId;
+    } finally { renderReferences(); referenceChanged(); }
+  }));
+  upload.append(input); form.append(upload); container.append(picker, form); markRequired(container); wrapRequiredLabels(container);
 }
 for (const id of ["video-family", "video-guide"]) $(`#${id}`).addEventListener("change", () => applyGuide());
 $("#references-save").addEventListener("click", () => libraryAction(async () => {

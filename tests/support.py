@@ -30,7 +30,7 @@ def direction_output(layout, assets=()):
         boundaries.append({"id": boundary["id"], "state": state})
     return {"warnings": [], "notes": [], "boundaries": boundaries,
         "handoffs": [{"id": h["id"], "bridge": "Continue the approved gesture and response.", "sound_bridge": "Keep the room ambience continuous."} for h in layout.get("handoffs", [])],
-        "reference_notes": [{"label": a["label"], "note": ""} for a in assets],
+        "reference_notes": [{"label": a["label"], "target_name": "Phone" if a.get("kind") == "prop" else "Lighting" if a.get("kind") == "other" else "", "note": "Use the specified visual elements." if a["note"] else ""} for a in assets],
         "clips": [{"id": clip["id"], "context": "A quiet classroom with consistent lighting.",
             "subject_definitions": "Preserve character identity.", "summary": "A restrained interaction.", "retention_analysis": "Preserve identity and clothing.",
             "shots": [{"id": shot["id"], "direction": "Follow the approved action with subtle expressions.", "pacing_weight": 1,

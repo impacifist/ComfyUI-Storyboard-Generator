@@ -242,6 +242,7 @@ def compile_prompts(document, payload):
     request = {**fields, "brief": document["brief"], "scope": scope, "plan": layout, "references": assets,
                "render_labels": prompt_renderer.render_labels(document),
                "character_bindings": speech.bindings(document, prompt_renderer.render_labels(document), assets),
+               "reference_targets": references.target_bindings(assets, len(document["brief"]["characters"])),
                "boundary_contract": boundary_contract, "mode": selected_guide["mode"] if selected_guide else "custom"}
     draft, result, dialogue_manifest, validation_report = compile_directions(
         document, layout, selected_guide, assets, provider, model, system_prompt, request)
@@ -271,7 +272,7 @@ def compile_prompts(document, payload):
             "guide_sha256": selected_guide["sha256"] if selected_guide else None,
             "guide_checked_at": selected_guide["checked_at"] if selected_guide else None,
             "system_prompt": system_prompt, "scope": scope,
-            "assembly_version": 7, "output_language": "english_except_dialogue", "dialogue_manifest": dialogue_manifest,
+            "assembly_version": 8, "output_language": "english_except_dialogue", "dialogue_manifest": dialogue_manifest,
             "english_reference_notes": draft["reference_notes"],
             "render_labels": prompt_renderer.render_labels(document),
             "validation_report": validation_report,

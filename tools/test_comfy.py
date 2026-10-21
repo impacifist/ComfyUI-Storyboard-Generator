@@ -1,6 +1,7 @@
 """Real ComfyUI smoke test in an isolated CPU instance; no existing server changes."""
 
 import argparse
+import base64
 import json
 import os
 import shutil
@@ -86,7 +87,7 @@ def main(comfy, python):
                         frame = page.locator(".sg-studio").element_handle().content_frame()
                         frame.wait_for_function("document.readyState === 'complete' && typeof busy !== 'undefined' && !busy")
 
-                        def dark_surface(selector):
+                        def dark_surface(selector, require_dark=True):
                             style = studio.locator(selector).first.evaluate("""node => {
                               const style = getComputedStyle(node);
                               let surface = node;
@@ -95,7 +96,9 @@ def main(comfy, python):
                             }""")
                             import re
                             colors = {key: [int(n) / 255 for n in re.findall(r'\d+', value)[:3]] for key, value in style.items()}
-                            assert len(colors["bg"]) == 3 and max(colors["bg"]) < .3, (selector, style)
+                            assert len(colors["bg"]) == 3, (selector, style)
+                            if require_dark:
+                                assert max(colors["bg"]) < .3, (selector, style)
                             def luminance(rgb):
                                 values = [v / 12.92 if v <= .04045 else ((v + .055) / 1.055) ** 2.4 for v in rgb]
                                 return sum(v * weight for v, weight in zip(values, (.2126, .7152, .0722)))
@@ -244,6 +247,26 @@ def main(comfy, python):
                         assert studio.locator("#brief-form").evaluate("() => localStorage.getItem('comfyui-storyboard.ollama-auto-unload')") == "false"
                         assert studio.locator("#conversion-results").evaluate("node => node.getBoundingClientRect().top < innerHeight / 2 && node.getBoundingClientRect().bottom <= innerHeight")
                         page.screenshot(path=str(artifacts / "ollama-memory-desktop.png"))
+                        # Exercise the actual reference routes and shared composer in the dark iframe.
+                        studio.locator("#video-family").select_option("minimax")
+                        studio.locator("#video-guide").select_option("reference")
+                        studio.locator("#reference-panel").evaluate("node => { node.parentElement.open = true; }")
+                        png = base64.b64decode("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+aD1sAAAAASUVORK5CYII=")
+                        for index, kind in enumerate(("character", "background", "prop", "other"), 1):
+                            studio.locator(f'[data-reference-kind="{kind}"]').click()
+                            if kind in ("prop", "other"):
+                                studio.locator("#reference-target-name").fill("Phone" if kind == "prop" else "Lighting")
+                            if kind == "other":
+                                studio.locator("#reference-usage").fill("Use only the warm backlight.")
+                            studio.locator("#reference-files").set_input_files({"name": "reference.png", "mimeType": "image/png", "buffer": png})
+                            expect(studio.locator(".reference-card")).to_have_count(index)
+                        for selector in ("#reference-panel", ".reference-composer", ".reference-group[open] .reference-card", "#reference-usage"):
+                            dark_surface(selector)
+                        dark_surface('.reference-kind-picker [aria-pressed="true"]', require_dark=False)
+                        page.screenshot(path=str(artifacts / "references-four-types-dark.png"))
+                        page.set_viewport_size({"width": 390, "height": 844})
+                        assert studio.locator("body").evaluate("() => document.documentElement.scrollWidth <= innerWidth + 1")
+                        page.set_viewport_size({"width": 1600, "height": 1050})
                         page.get_by_role("tab", name="Clip prompts", exact=True).click()
                         studio.locator("#brief-form").evaluate("() => I18n.select('ko')")
                         expect(page.get_by_role("button", name="선택한 클립을 노드로 추가", exact=True)).to_be_visible()
