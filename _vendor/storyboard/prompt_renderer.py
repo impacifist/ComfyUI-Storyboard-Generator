@@ -5,7 +5,7 @@ import re
 import unicodedata
 
 from .references import ROLE_GUIDANCE
-from . import references, speech
+from . import conversion_structure, references, speech
 from .schema import CHAR_STATE, NUMBER, TEXT, ValidationError, array, obj, validate
 
 DIRECTION_STATE = obj(characters=array(CHAR_STATE),
@@ -51,6 +51,10 @@ def output_schema(document, layout):
     """Bind reference fields to this storyboard instead of unconstrained TEXT."""
     # TEXT is deliberately shared in base contracts. Break aliases before adding enums.
     schema = json.loads(json.dumps(DIRECTOR_OUTPUT))
+    clip = schema["properties"]["clips"]["items"]["properties"]
+    clip["id"]["enum"] = [c["id"] for c in layout["clips"]]
+    clip["shots"]["items"]["properties"]["id"]["enum"] = list(dict.fromkeys(
+        s["id"] for c in layout["clips"] for s in c["shots"]))
     boundary = schema["properties"]["boundaries"]["items"]["properties"]
     ids = [c["id"] for c in document["brief"]["characters"]]
     boundary["id"]["enum"] = [b["id"] for b in layout.get("boundaries", [])] or ["unused"]
@@ -240,8 +244,7 @@ def assemble(document, layout, draft, profile, assets):
     validate(draft, DIRECTOR_OUTPUT, "director_output")
     if profile and profile["id"].startswith("minimax"):
         draft = h3_reference_labels(draft, assets)
-    if [c["id"] for c in draft["clips"]] != [c["id"] for c in layout["clips"]]:
-        raise ValidationError("변환 결과의 클립 수 또는 순서가 원본 계획과 다릅니다.")
+    conversion_structure.require_exact(layout, draft)
     names = render_labels(document)
     identities = speech.bindings(document, names, assets)
     identity_by_id = {item["speaker"]: item for item in identities}
@@ -300,8 +303,6 @@ def assemble(document, layout, draft, profile, assets):
             cameras.setdefault(shot["id"], shot["camera"])
     rendered, manifest = [], []
     for generated, clip in zip(draft["clips"], layout["clips"]):
-        if [s["id"] for s in generated["shots"]] != [s["id"] for s in clip["shots"]]:
-            raise ValidationError("변환 결과의 컷 수 또는 순서가 원본 계획과 다릅니다.")
         if not generated["context"].strip() or any(not s["direction"].strip() for s in generated["shots"]):
             raise ValidationError("빈 프롬프트가 반환되었습니다.")
         fragments = [generated[key] for key in ("context", "subject_definitions", "summary", "retention_analysis",

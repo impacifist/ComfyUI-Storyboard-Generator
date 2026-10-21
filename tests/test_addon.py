@@ -7,7 +7,7 @@ import unittest
 from pathlib import Path
 from unittest.mock import patch
 
-from support import ROOT, document, fake_ai, service
+from support import ROOT, direction_output, document, fake_ai, service
 from storyboard_addon import clip_snapshot, nodes
 
 
@@ -201,3 +201,36 @@ class AddonTests(unittest.TestCase):
         release.assert_called_once()
         self.assertEqual(result["ollama_release"]["status"], "failed")
         self.assertEqual(len(service.dispatch("/bundle/" + result["id"])["clips"]), 2)
+
+    def test_complete_id_permutation_is_saved_and_becomes_correct_portable_strings(self):
+        def reordered(provider, model, system, user, schema):
+            request = json.loads(user)
+            self.assertIn('shot_contract', request)
+            draft = direction_output(request['plan'])
+            draft['clips'].reverse()
+            for clip in draft['clips']:
+                clip['shots'].reverse()
+            return draft
+
+        with patch.object(service.providers, 'generate_json', side_effect=reordered) as ai:
+            result = service.dispatch('/conversion/compile', self.payload)
+        self.assertEqual(ai.call_count, 1)
+        self.assertTrue(result['result']['validation_report']['reordered_by_id'])
+        self.assertEqual(service.library.load(self.board), self.document)
+        bundle = service.dispatch('/bundle/' + result['id'])
+        self.assertEqual([c['clip_id'] for c in bundle['clips']], ['C01', 'C02'])
+        for clip in bundle['clips']:
+            self.assertEqual(nodes.StoryboardClipPrompt().output_clip(clip_snapshot.encode_snapshot(clip))[0], clip['prompt'])
+
+    def test_failed_structure_repair_preserves_saved_conversion_and_source(self):
+        first = self.compile()
+        layout = service.conversion.preflight(self.document, self.payload)[0]
+        invalid = direction_output(layout)
+        invalid['clips'][1]['shots'].pop()
+        with patch.object(service.providers, 'generate_json', return_value=invalid) as ai:
+            with self.assertRaisesRegex(service.ValidationError, 'clips.C02.shots'):
+                service.dispatch('/conversion/compile', self.payload)
+        self.assertEqual(ai.call_count, 2)
+        self.assertEqual(len(service.library.conversions(self.board)), 1)
+        self.assertEqual(service.library.conversions(self.board)[0]['id'], first['id'])
+        self.assertEqual(service.library.load(self.board), self.document)

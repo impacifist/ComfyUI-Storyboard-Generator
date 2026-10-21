@@ -1007,6 +1007,7 @@ function renderConversion(result, date = "", remember = true, savedId = null) {
   const metadata = el("details", "result-metadata"); metadata.append(el("summary", "", tr("생성 정보와 가이드 출처")), el("p", "helper", tr("가이드 출처: {0}", {0: result.guide_source})));
   section.append(heading, el("p", "helper", I18n.system(result.review_note)), metadata);
   if (result.validation_report?.repaired) metadata.append(el("p", "helper", tr("출력 오류를 1회 자동 교정한 뒤 다시 검증하여 저장했습니다.")));
+  if (result.validation_report?.reordered_by_id?.length) metadata.append(el("p", "helper", tr("원본 ID에 맞춰 클립·컷 순서를 복원했습니다. 내용과 대사 연결은 유지됩니다.")));
   if (result.output.notes?.length) {
     const notes = el("details", "conversion-notes"); notes.append(el("summary", "", tr("검토 메모")));
     for (const note of result.output.notes) notes.append(el("p", "helper", I18n.system(note)));

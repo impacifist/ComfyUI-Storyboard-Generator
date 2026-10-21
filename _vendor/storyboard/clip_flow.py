@@ -1,6 +1,7 @@
 """Within-clip performance budgets and explicit, paired narrative handoffs."""
 
 from .clip_planning import speech_seconds, update_estimates
+from .conversion_structure import require_exact
 from .schema import ValidationError
 
 
@@ -30,6 +31,7 @@ def refine(layout, draft):
     Original actions, speech ownership, source offsets, clip count and user-set
     clip lengths stay intact. Rough speech floors are advisory, not audio timing.
     """
+    require_exact(layout, draft)
     for clip in draft["clips"]:
         for shot in clip["shots"]:
             weight = shot["pacing_weight"]
@@ -39,8 +41,6 @@ def refine(layout, draft):
         return layout
     changed = 0
     for planned, directed in zip(layout["clips"], draft["clips"]):
-        if planned["id"] != directed["id"] or [s["id"] for s in planned["shots"]] != [s["id"] for s in directed["shots"]]:
-            raise ValidationError("변환 결과의 컷 수 또는 순서가 원본 계획과 다릅니다.")
         floors = [max(.25, speech_seconds(s["source"]["dialogue"]) + .35)
                   if s["source"]["dialogue"] else .25 for s in planned["shots"]]
         weights = [s["pacing_weight"] for s in directed["shots"]]

@@ -210,6 +210,7 @@ window.UI_MESSAGES = {
   "영어 전용 규칙 적용 전 결과입니다. 콘티를 다시 변환해주세요.": ["This result predates the English-only policy. Convert the storyboard again.", "英語専用ルール適用前の結果です。ストーリーボードを再変換してください。"],
   "AI 출력 검증 실패 시 최대 1회 추가 호출하여 자동 교정합니다.": ["Invalid AI output is repaired with at most one additional request.", "AI出力の検証に失敗した場合、最大1回追加リクエストで自動修正します。"],
   "출력 오류를 1회 자동 교정한 뒤 다시 검증하여 저장했습니다.": ["The output was repaired once, validated again and saved.", "出力を1回自動修正し、再検証して保存しました。"],
+  "원본 ID에 맞춰 클립·컷 순서를 복원했습니다. 내용과 대사 연결은 유지됩니다.": ["Clip and shot order was restored using the original IDs. Content and dialogue assignments are preserved.", "元のIDに基づいてクリップとカットの順序を復元しました。内容とセリフの対応は維持されています。"],
   "AI 출력 자동 교정 1회 후에도 검증에 실패했습니다. 원본은 유지됩니다: {0}": ["Validation still failed after one automatic repair. Your source is unchanged: {0}", "1回の自動修正後も検証に失敗しました。元のストーリーボードは保持されます: {0}"],
   "원본 콘티": ["Source storyboard", "元のストーリーボード"],
   "전체 선택": ["Select all", "すべて選択"],
