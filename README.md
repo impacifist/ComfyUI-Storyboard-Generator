@@ -106,7 +106,7 @@ The Studio and wrapper support English, Korean and Japanese. Prompt directions a
 
 ## Shared engine
 
-The engine and Studio assets are an unmodified, pinned snapshot of upstream v0.5.6-beta, not a separately maintained fork. `_vendor/upstream.json` records the full commit and SHA-256 of every imported file. ComfyUI integration lives outside `_vendor`. Loopback LLM requests have no application socket timeout; a model may take more than three minutes to return its first response. Local output budgets and session diagnostics are available in the embedded Studio.
+The engine and Studio assets are an unmodified, pinned snapshot of upstream v0.5.7-beta, not a separately maintained fork. `_vendor/upstream.json` records the full commit and SHA-256 of every imported file. ComfyUI integration lives outside `_vendor`. Loopback LLM requests have no application socket timeout; a model may take more than three minutes to return its first response. Local output budgets and session diagnostics are available in the embedded Studio.
 
 The upstream application does not yet publish an installable engine package. This snapshot permits independent installation without downloading code at runtime or requiring the standalone server. A shared versioned Python package can replace it later.
 
