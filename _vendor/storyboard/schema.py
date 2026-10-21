@@ -92,7 +92,7 @@ def validate_story(story, brief):
     validate(story, STORY, "story")
     shots = story["shots"]
     if len(shots) != brief["shot_count"]:
-        raise ValidationError("생성된 컷 수가 요청한 컷 수와 다릅니다.")
+        raise ValidationError(f"생성된 컷 수가 요청한 컷 수와 다릅니다. 요청 {brief['shot_count']}개 · 생성 {len(shots)}개")
     if not story["summary"].strip() or not story["beats"]:
         raise ValidationError("장면 요약과 감정 흐름이 필요합니다.")
     ids = {c["id"] for c in brief["characters"]}

@@ -132,6 +132,7 @@
           </form>
         </section>
         <section class="board-column" aria-label="콘티 작업 공간">
+          <div id="generation-pending" class="generation-pending" hidden><span id="generation-pending-label"></span><button id="generation-pending-open" class="secondary" type="button">생성 결과 확인</button></div>
           <div class="board-top"><div><p class="eyebrow">STORYBOARD WORKSPACE</p><h2 id="board-title">첫 장면을 기다리고 있어요</h2></div><span id="source" class="badge">DRAFT</span></div>
           <div id="empty" class="empty-board">
             <div class="frame-stack" aria-hidden="true"><div class="ghost-frame back"></div><div class="ghost-frame front"><span>01</span><div class="composition"><i></i><b></b><em></em></div><small>YOUR FIRST SCENE</small></div></div>
@@ -214,6 +215,15 @@
     <details><summary>고급 편집 · 인물과 소품의 시작·종료 상태</summary><p class="helper">상태는 구조화된 데이터입니다. 시작과 종료의 인물 ID를 유지하세요.</p><label>상태 데이터<textarea id="edit-json" rows="12" spellcheck="false"></textarea></label></details>
     <p id="edit-error" class="error-text" role="alert"></p><button id="save-edit" type="submit" class="primary">변경 저장</button>
   </form></dialog>
+  <dialog id="generation-choice" aria-labelledby="generation-choice-title">
+    <div class="section-heading"><h2 id="generation-choice-title">생성된 컷 수를 확인해주세요</h2><button id="generation-choice-close" type="button" class="quiet">닫기 ×</button></div>
+    <p id="generation-choice-count" class="generation-count" role="status"></p>
+    <p id="generation-choice-duration" class="helper"></p>
+    <p class="helper">아래 결과를 확인한 뒤 선택하세요. 사용을 선택하기 전까지 기존 콘티는 바뀌지 않습니다. 다시 생성하면 API 요청이 추가로 발생합니다.</p>
+    <div id="generation-choice-preview"></div>
+    <p id="generation-choice-error" class="error-text" role="alert"></p>
+    <div class="generation-choice-actions"><button id="generation-choice-use" type="button" class="primary">이 결과 사용</button><button id="generation-choice-retry" type="button" class="secondary">다시 생성</button><button id="generation-choice-download" type="button" class="quiet">생성 결과 JSON 저장</button></div>
+  </dialog>
   <dialog id="diagnostics-dialog" aria-labelledby="diagnostics-title">
     <div class="section-heading"><h2 id="diagnostics-title">진단 로그</h2><button id="diagnostics-close" type="button" class="quiet">닫기 ×</button></div>
     <p class="helper">현재 실행 중인 앱의 최근 AI 요청 200건을 표시합니다. 재시작하면 초기화됩니다. API 키·주소·프롬프트·대사·응답 본문은 기록하지 않습니다.</p>

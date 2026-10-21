@@ -3,6 +3,7 @@
 const $ = (selector) => document.querySelector(selector);
 const form = $("#brief-form");
 let project = null;
+let pendingGeneration = null;
 let checks = null;
 let aiReview = null;
 let providers = [];
@@ -444,33 +445,91 @@ async function toggleLock(index) {
   finally { setBusy(false); }
 }
 
-async function generate(regenerate = false) {
+async function useGeneratedResult(result, provider) {
+  project = result.document; checks = result.review; aiReview = null; dirty = true;
+  fillBrief(project.brief);
+  pendingGeneration = null; renderGenerationChoice(); renderBoard();
+  try {
+    await api("/api/library/save", {document: project});
+    dirty = false;
+  } catch (error) {
+    notice(tr("콘티는 생성됐지만 보관함 저장에 실패했습니다. JSON으로 저장해주세요. {0}", {0: error.message}), true);
+    return;
+  }
+  notice(provider === "demo" ? tr("예시 콘티입니다. 보관함에 저장했습니다. AI 생성과 페르소나 해석은 수행하지 않았습니다.") : tr("콘티 초안을 보관함에 저장했습니다. 검수 후 편집한 내용은 ‘보관함에 저장’으로 새 사본을 저장하세요."));
+}
+
+async function generate(regenerate = false, retryPayload = null) {
   if (busy) return;
   try {
-    validateBriefInputs();
-    const selection = aiSelection();
-    const brief = readBrief();
+    if (!retryPayload) validateBriefInputs();
+    const selection = retryPayload ? {provider: retryPayload.provider, model: retryPayload.model} : aiSelection();
+    const brief = retryPayload ? retryPayload.brief : readBrief();
     setBusy(true, tr("설정을 확인하고 있습니다…"));
     await api("/api/validate", {brief});
-    if (project && !regenerate && !window.confirm(tr("현재 콘티를 새로 만듭니다. 필요한 경우 먼저 JSON으로 저장하세요. 계속할까요?"))) return;
+    if (project && !regenerate && !retryPayload && !window.confirm(tr("현재 콘티를 새로 만듭니다. 필요한 경우 먼저 JSON으로 저장하세요. 계속할까요?"))) return;
     setBusy(true, selection.provider === "demo" ? tr("예시 템플릿을 준비하고 있습니다…") : brief.shot_count > 12
       ? tr("{0}에서 전체 흐름을 설계한 뒤 최대 6컷씩 생성하고 있습니다. 여러 API 호출로 시간이 더 걸릴 수 있습니다…", {0: selection.provider})
       : tr("{0}에서 콘티를 만들고 있습니다. 최대 약 3분이 걸릴 수 있습니다…", {0: selection.provider}));
-    const result = await api("/api/generate", {brief, ...selection,
-      previous: regenerate ? project : null, revision: regenerate ? $("#revision").value.trim() : ""});
-    project = result.document; checks = result.review; aiReview = null; dirty = true;
-    renderBoard();
-    try {
-      await api("/api/library/save", {document: project});
-      dirty = false;
-    } catch (error) {
-      notice(tr("콘티는 생성됐지만 보관함 저장에 실패했습니다. JSON으로 저장해주세요. {0}", {0: error.message}), true);
+    const request = retryPayload || JSON.parse(JSON.stringify({brief, ...selection, offer_count_choice: true,
+      previous: regenerate ? project : null, revision: regenerate ? $("#revision").value.trim() : ""}));
+    const result = await api("/api/generate", request);
+    if (result.pending_generation) {
+      pendingGeneration = {...result.pending_generation, request};
+      renderGenerationChoice(); $("#generation-choice").showModal();
+      notice(tr("요청 {0}컷 · 생성 {1}컷입니다. 결과를 확인하고 사용할지 선택해주세요.", {0: pendingGeneration.requested_count, 1: pendingGeneration.actual_count}));
       return;
     }
-    notice(selection.provider === "demo" ? tr("예시 콘티입니다. 보관함에 저장했습니다. AI 생성과 페르소나 해석은 수행하지 않았습니다.") : tr("콘티 초안을 보관함에 저장했습니다. 검수 후 편집한 내용은 ‘보관함에 저장’으로 새 사본을 저장하세요."));
-  } catch (error) { notice(error.message, true); }
+    await useGeneratedResult(result, selection.provider);
+  } catch (error) {
+    notice(error.message, true);
+    if (retryPayload && pendingGeneration) {
+      renderGenerationChoice();
+      if (!$("#generation-choice").open) $("#generation-choice").showModal();
+      $("#generation-choice-error").textContent = tr("다시 생성하지 못했습니다. 이전 생성 결과를 계속 사용할 수 있습니다.") + " " + error.message;
+    }
+  }
   finally { setBusy(false); }
 }
+
+function renderGenerationChoice() {
+  $("#generation-pending").hidden = !pendingGeneration;
+  if (!pendingGeneration) { $("#generation-choice").close(); return; }
+  const pending = pendingGeneration;
+  const count = tr("요청 {0}컷 · 생성 {1}컷", {0: pending.requested_count, 1: pending.actual_count});
+  $("#generation-pending-label").textContent = count;
+  $("#generation-choice-count").textContent = count;
+  $("#generation-choice-duration").textContent = tr("목표 {0}초 · 생성된 컷 합계 {1}초", {0: pending.document.brief.duration, 1: pending.review.total_duration});
+  $("#generation-choice-error").textContent = "";
+  const preview = $("#generation-choice-preview");
+  preview.replaceChildren(el("h3", "", pending.document.brief.title));
+  readOnlyField(preview, "이야기 요약", pending.document.story.summary);
+  for (const shot of pending.document.story.shots) {
+    preview.append(el("h3", "", `${shot.id} · ${shot.duration}s · ${shot.purpose}`), shotDetails(shot));
+  }
+}
+$("#generation-pending-open").addEventListener("click", () => { renderGenerationChoice(); $("#generation-choice").showModal(); });
+$("#generation-choice-close").addEventListener("click", () => $("#generation-choice").close());
+$("#generation-choice-download").addEventListener("click", () => {
+  if (pendingGeneration) download(JSON.stringify(pendingGeneration.document, null, 2), "storyboard-generated-draft.json", "application/json");
+});
+$("#generation-choice-use").addEventListener("click", async () => {
+  if (busy || !pendingGeneration) return;
+  const pending = pendingGeneration;
+  setBusy(true);
+  try {
+    const accepted = await api("/api/generation/accept", {document: pending.document,
+      requested_brief: pending.request.brief, previous: pending.request.previous});
+    await useGeneratedResult(accepted, pending.request.provider);
+  } catch (error) { $("#generation-choice-error").textContent = error.message; }
+  finally { setBusy(false); }
+});
+$("#generation-choice-retry").addEventListener("click", () => {
+  if (busy || !pendingGeneration) return;
+  const request = pendingGeneration.request;
+  $("#generation-choice").close();
+  generate(!!request.previous, request);
+});
 
 function openEditor(index) {
   if (project.story.shots[index].locked) {
@@ -1124,6 +1183,7 @@ $(".language-control").addEventListener("focusout", (event) => {
 });
 
 window.addEventListener("languagechange", () => {
+  if (pendingGeneration) renderGenerationChoice();
   updateShotRecommendation();
   updateCastControls();
   // Re-render UI chrome only. Never call generation, overwrite a form, or translate stored content.

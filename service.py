@@ -11,7 +11,7 @@ from .ollama_memory import unload_model
 
 VENDOR = Path(__file__).resolve().parent / "_vendor"
 BUSY = threading.Lock()
-SERIAL_OPERATIONS = {"/settings", "/generate", "/review", "/conversion/compile", "/ollama/unload"}
+SERIAL_OPERATIONS = {"/settings", "/generate", "/generation/accept", "/review", "/conversion/compile", "/ollama/unload"}
 
 
 class BusyError(Exception):
@@ -81,8 +81,9 @@ def operation(path, payload):
         if path == "/settings":
             return providers.save_settings(payload)
         if path == "/generate":
-            document = engine.generate(payload)
-            return {"document": document, "review": engine.review(document)}
+            return engine.generate_response(payload)
+        if path == "/generation/accept":
+            return engine.accept_generation(payload)
         if path == "/validate":
             if "document" in payload:
                 return {"review": engine.review(payload["document"])}

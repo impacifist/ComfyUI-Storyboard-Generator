@@ -116,6 +116,24 @@ class AddonTests(unittest.TestCase):
             with patch.object(service.providers, "generate_json", side_effect=AssertionError("No extra AI")):
                 self.assertEqual(nodes.StoryboardClipPrompt().output_clip(clip_snapshot.encode_snapshot(clip))[0], clip["prompt"])
 
+    def test_mismatched_count_requires_acceptance_without_another_ai_request(self):
+        story = copy.deepcopy(self.document["story"])
+        story["shots"] = story["shots"][:5]
+        original = copy.deepcopy(self.document)
+        with patch.object(service.providers, "generate_json", return_value=story) as ai:
+            result = service.dispatch("/generate", {"brief": self.document["brief"], "provider": "openai",
+                "model": "mock", "offer_count_choice": True})
+            pending = result["pending_generation"]
+            self.assertEqual((pending["requested_count"], pending["actual_count"]), (6, 5))
+            self.assertEqual(len(service.library.listing()), 1)
+            accepted = service.dispatch("/generation/accept", {"document": pending["document"],
+                "requested_brief": self.document["brief"]})
+            ai.assert_called_once()
+        self.assertEqual(accepted["document"]["brief"]["shot_count"], 5)
+        self.assertEqual(service.library.load(self.board), original)
+        service.dispatch("/library/save", {"document": accepted["document"]})
+        self.assertEqual(len(service.library.listing()), 2)
+
     def test_invalid_snapshots_fail_before_any_output(self):
         clip = service.dispatch("/bundle/" + self.compile()["id"])["clips"][0]
         for key, bad in (("duration", 16), ("duration", float("nan")), ("clip_id", "../../key"), ("prompt", ""), ("source_shots", [])):

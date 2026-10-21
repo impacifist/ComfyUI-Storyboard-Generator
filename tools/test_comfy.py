@@ -317,6 +317,35 @@ def main(comfy, python):
                             studio.locator("#brief-form").evaluate("(_, language) => I18n.select(language)", lang)
                             assert studio.locator("body").evaluate("() => document.documentElement.scrollWidth <= innerWidth + 1")
                         page.screenshot(path=str(artifacts / "workbench-create-mobile.png"))
+                        page.set_viewport_size({"width": 1600, "height": 1050})
+                        generation_requests = []
+
+                        def generation_route(route):
+                            body = route.request.post_data_json
+                            generation_requests.append(body)
+                            assert body['offer_count_choice'] is True
+                            candidate = json.loads(json.dumps(body['previous']))
+                            candidate['story']['shots'] = candidate['story']['shots'][:5]
+                            candidate['brief']['shot_count'] = 5
+                            route.fulfill(json={'pending_generation': {'document': candidate,
+                                'review': service.engine.review(candidate), 'requested_count': body['brief']['shot_count'], 'actual_count': 5}})
+
+                        page.route("**/storyboard-generator/api/generate", generation_route)
+                        studio.locator("#regenerate").click()
+                        expect(studio.locator("#generation-choice")).to_be_visible()
+                        expect(studio.locator("#generation-choice-count")).to_contain_text("Generated: 5")
+                        assert studio.locator("#brief-form").evaluate("() => project.story.shots.length") == 6
+                        for selector in ("#generation-choice", "#generation-choice-preview", "#generation-choice-count"):
+                            dark_surface(selector)
+                        page.screenshot(path=str(artifacts / "generation-count-choice-dark.png"))
+                        for width in (390, 1600):
+                            page.set_viewport_size({"width": width, "height": 1050})
+                            assert studio.locator("#generation-choice").evaluate("node => node.scrollWidth <= node.clientWidth + 1")
+                        studio.locator("#generation-choice-use").click()
+                        expect(studio.locator("#generation-choice")).not_to_be_visible()
+                        expect(studio.locator("#stats")).to_contain_text("5 shots")
+                        assert len(generation_requests) == 1
+                        assert studio.locator("#brief-form").evaluate("() => project.brief.shot_count") == 5
                         assert not errors, errors
                         print("PASS: toolbar, embedded creation, clip search, 3 nodes, deduplication, explicit update, per-node selection, preserved wires, workflow reload, actual STRING queue, Ollama auto/manual unload UI with mocked requests, 3 languages and mobile.", flush=True)
                     except Exception:

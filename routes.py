@@ -17,7 +17,7 @@ PREFIX = "/storyboard-generator"
 ROOT = Path(__file__).resolve().parent
 MAX_BODY = 16_000_000
 GET_PATHS = {"/config", "/guides", "/example", "/catalog", "/diagnostics"}
-POST_PATHS = {"/settings", "/generate", "/validate", "/review", "/export", "/library/list", "/library/save",
+POST_PATHS = {"/settings", "/generate", "/generation/accept", "/validate", "/review", "/export", "/library/list", "/library/save",
               "/library/load", "/library/delete", "/library/restore", "/references/upload", "/references/save",
               "/conversion/plan", "/conversion/compile", "/ollama/unload", "/diagnostics/clear"}
 

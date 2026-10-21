@@ -6,6 +6,8 @@ Create storyboards inside ComfyUI, convert them to MiniMax H3, Seedance or LTX 2
 
 This is an independent ComfyUI node pack. The standalone [AI Video Storyboard Generator](https://github.com/impacifist/ai-video-storyboard-generator) remains independent. No separate web server is required.
 
+When a complete, valid result has a different shot count, review the requested/generated counts and draft, then choose **Use this draft** or **Generate again**. Using a draft makes no extra AI call; a failed retry retains it. You can download its JSON before deciding. Source validation and locked shots remain enforced. Unaccepted drafts stay in the current page session, so use or download them before refreshing.
+
 ## Finished animation example
 
 https://github.com/user-attachments/assets/0d82f51c-8621-4540-af1c-118edf0df261

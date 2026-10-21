@@ -97,7 +97,7 @@ def demo_story(brief, revision=""):
             "shots": shots}
 
 
-def generate(payload):
+def generate(payload, *, allow_count_choice=False):
     brief = payload.get("brief")
     validate_brief(brief)
     provider, model = payload.get("provider"), payload.get("model", "")
@@ -125,14 +125,24 @@ def generate(payload):
             "previous_story": previous["story"] if previous else None,
             "locked_shots": list(locked.values()),
         }, ensure_ascii=False), STORY)
-    validate_story(story, brief)
+    validate(story, STORY, "story")
+    actual_count = len(story["shots"])
+    effective_brief = copy.deepcopy(brief)
+    if allow_count_choice and actual_count != brief["shot_count"]:
+        if not 3 <= actual_count <= 60:
+            raise ValidationError(f"컷 수가 다릅니다. 요청 {brief['shot_count']}개 · 생성 {actual_count}개. 사용할 수 있는 범위는 3~60컷입니다.")
+        effective_brief["shot_count"] = actual_count
+        validate_brief(effective_brief)
+    validate_story(story, effective_brief)
+    if not set(locked) <= {s["id"] for s in story["shots"]}:
+        raise ValidationError("생성 결과에 고정 컷이 누락되었습니다. 기존 콘티는 유지됩니다.")
     # Locks are enforced by code, even if the model disregards the prompt.
     for index, shot in enumerate(story["shots"]):
         story["shots"][index] = copy.deepcopy(locked.get(shot["id"], {**shot, "locked": False}))
     polish_status = None
     if provider != "demo":
         try:
-            story, polish_status = dialogue.polish_japanese(story, brief, provider, model, revision)
+            story, polish_status = dialogue.polish_japanese(story, effective_brief, provider, model, revision)
         except (ValidationError, providers.ProviderError):
             # Keep the valid draft and expose an advisory instead of losing the storyboard.
             polish_status = "incomplete"
@@ -143,12 +153,55 @@ def generate(payload):
     if polish_status:
         history.append({"at": stamp, "event": ("일본어 대사 교정 완료" if polish_status == "completed" else
                                                 "일본어 대사 교정 미완료 · 원문 유지") + f" · {provider}"})
-    document = {"schema_version": 1, "brief": copy.deepcopy(brief), "story": story,
+    if actual_count != brief["shot_count"]:
+        history = history[-99:] + [{"at": stamp,
+            "event": f"컷 수 차이 검토 대기 · 요청 {brief['shot_count']}개 · 생성 {actual_count}개"}]
+    document = {"schema_version": 1, "brief": effective_brief, "story": story,
                 "provenance": {"provider": provider, "model": model if provider != "demo" else "template",
                                "created_at": previous["provenance"]["created_at"] if previous else stamp,
                                "updated_at": stamp}, "history": history}
     validate_document(document)
     return document
+
+
+def generate_response(payload):
+    """Offer only fully validated count-only differences; never persist a choice."""
+    offer = payload.get("offer_count_choice", False)
+    if type(offer) is not bool:
+        raise ValidationError("offer_count_choice: boolean required")
+    document = generate(payload, allow_count_choice=offer)
+    requested, actual = payload["brief"]["shot_count"], len(document["story"]["shots"])
+    result = {"document": document, "review": review(document)}
+    if requested != actual:
+        return {"pending_generation": {**result, "requested_count": requested, "actual_count": actual}}
+    return result
+
+
+def accept_generation(payload):
+    """Explicitly accept a validated draft without another provider request."""
+    document = copy.deepcopy(payload.get("document"))
+    validate_document(document)
+    requested = payload.get("requested_brief")
+    validate_brief(requested)
+    if requested["shot_count"] == len(document["story"]["shots"]):
+        raise ValidationError("요청과 생성 컷 수가 같아 선택이 필요하지 않습니다.")
+    if document["brief"] != {**requested, "shot_count": len(document["story"]["shots"])}:
+        raise ValidationError("선택한 초안의 설정이 원래 요청과 다릅니다.")
+    previous = payload.get("previous")
+    if previous is not None:
+        validate_document(previous)
+        generated = {s["id"]: s for s in document["story"]["shots"]}
+        if any(s["locked"] for s in previous["story"]["shots"]) and previous["brief"] != requested:
+            raise ValidationError("고정 컷이 있는 동안 원본 설정을 바꿀 수 없습니다. 컷 고정을 해제해주세요.")
+        if any(generated.get(s["id"]) != s for s in previous["story"]["shots"] if s["locked"]):
+            raise ValidationError("생성 결과의 고정 컷이 원본과 다릅니다.")
+    actual = len(document["story"]["shots"])
+    stamp = now()
+    document["history"] = document["history"][-99:] + [{"at": stamp,
+        "event": f"컷 수 차이 수락 · 요청 {requested['shot_count']}개 · 생성 {actual}개 · 사용자 선택"}]
+    document["provenance"]["updated_at"] = stamp
+    validate_document(document)
+    return {"document": document, "review": review(document)}
 
 
 def review(document):

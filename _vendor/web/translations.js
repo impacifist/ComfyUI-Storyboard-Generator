@@ -676,6 +676,16 @@ Object.assign(window.UI_MESSAGES, {
 });
 
 Object.assign(window.UI_MESSAGES, {
+  "생성된 컷 수를 확인해주세요": ["Review the generated shot count", "生成されたカット数を確認してください"],
+  "다시 생성하지 못했습니다. 이전 생성 결과를 계속 사용할 수 있습니다.": ["Generation failed. The previous draft is still available to use.", "再生成できませんでした。前の生成結果は引き続き使用できます。"],
+  "목표 {0}초 · 생성된 컷 합계 {1}초": ["Target: {0}s · Generated shots: {1}s total", "目標：{0}秒・生成されたカットの合計：{1}秒"],
+  "생성 결과 확인": ["Review generated draft", "生成結果を確認"],
+  "요청 {0}컷 · 생성 {1}컷": ["Requested: {0} shots · Generated: {1} shots", "指定：{0}カット・生成：{1}カット"],
+  "요청 {0}컷 · 생성 {1}컷입니다. 결과를 확인하고 사용할지 선택해주세요.": ["Requested {0} shots, generated {1}. Review the draft and choose whether to use it.", "指定は{0}カット、生成結果は{1}カットです。内容を確認して使用するか選んでください。"],
+  "아래 결과를 확인한 뒤 선택하세요. 사용을 선택하기 전까지 기존 콘티는 바뀌지 않습니다. 다시 생성하면 API 요청이 추가로 발생합니다.": ["Review the draft below before choosing. Your current storyboard stays unchanged until you choose Use this draft. Generating again makes another API request.", "以下の結果を確認して選んでください。「この結果を使う」を選ぶまで現在のストーリーボードは変更されません。再生成するとAPIリクエストが追加で発生します。"],
+  "이 결과 사용": ["Use this draft", "この結果を使う"],
+  "다시 생성": ["Generate again", "再生成"],
+  "생성 결과 JSON 저장": ["Download draft JSON", "生成結果をJSONで保存"],
   "레퍼런스 추가": ["Add references", "参考画像を追加"],
   "예: 조명 스타일": ["Example: lighting style", "例：照明スタイル"],
   "적용 범위: 관련된 모든 컷": ["Scope: all relevant shots", "適用範囲：関連するすべてのカット"],
