@@ -245,7 +245,7 @@ def main(comfy, python):
                         expect(studio.locator("#ollama-memory-status")).to_be_empty()
                         assert conversion_calls[-1]["unload_ollama_after"] is False
                         assert studio.locator("#brief-form").evaluate("() => localStorage.getItem('comfyui-storyboard.ollama-auto-unload')") == "false"
-                        assert studio.locator("#conversion-results").evaluate("node => node.getBoundingClientRect().top < innerHeight / 2 && node.getBoundingClientRect().bottom <= innerHeight")
+                        expect(studio.locator(".prompt-clip .prompt-output").first).to_be_in_viewport()
                         page.screenshot(path=str(artifacts / "ollama-memory-desktop.png"))
                         # Exercise the actual reference routes and shared composer in the dark iframe.
                         studio.locator("#video-family").select_option("minimax")
@@ -263,7 +263,27 @@ def main(comfy, python):
                         for selector in ("#reference-panel", ".reference-composer", ".reference-group[open] .reference-card", "#reference-usage"):
                             dark_surface(selector)
                         dark_surface('.reference-kind-picker [aria-pressed="true"]', require_dark=False)
+                        for width in (1440, 1920, 2560):
+                            page.set_viewport_size({"width": width, "height": 1080})
+                            assert page.locator("#storyboard-panel").evaluate("node => node.getBoundingClientRect().width >= innerWidth * .97")
+                            dimensions = studio.locator("#conversion-controls").evaluate("""node => {
+                              const setting = node.querySelector('.conversion-settings').getBoundingClientRect();
+                              const result = node.querySelector('#conversion-results').getBoundingClientRect();
+                              const reference = node.querySelector('#reference-panel').getBoundingClientRect();
+                              const workspace = node.querySelector('.conversion-workspace').getBoundingClientRect();
+                              return {settings: setting.width, results: result.width, references: reference.width,
+                                workspace: workspace.width, ordered: result.top >= setting.bottom,
+                                scrolls: getComputedStyle(node).overflowY === 'auto'};
+                            }""")
+                            assert dimensions['settings'] >= dimensions['workspace'] * .98, dimensions
+                            assert dimensions['results'] >= dimensions['workspace'] * .98, dimensions
+                            assert dimensions['references'] >= dimensions['workspace'] * .9, dimensions
+                            assert dimensions['ordered'] and dimensions['scrolls'], dimensions
+                            assert studio.locator("body").evaluate("() => document.documentElement.scrollWidth <= innerWidth + 1")
+                        page.set_viewport_size({"width": 1600, "height": 1050})
+                        studio.locator("#reference-panel").scroll_into_view_if_needed()
                         page.screenshot(path=str(artifacts / "references-four-types-dark.png"))
+                        page.screenshot(path=str(artifacts / "conversion-full-width.png"))
                         page.set_viewport_size({"width": 390, "height": 844})
                         assert studio.locator("body").evaluate("() => document.documentElement.scrollWidth <= innerWidth + 1")
                         page.set_viewport_size({"width": 1600, "height": 1050})

@@ -1,4 +1,4 @@
-.sg-panel{--sg-paper:#121418;--sg-surface:#191c22;--sg-ink:#e7e9ee;--sg-line:#30353f;--sg-accent:#e7a07e;--sg-muted:#a2a8b4;--sg-header-height:58px;box-sizing:border-box;width:min(1640px,96vw);height:94dvh;max-width:96vw;max-height:96dvh;padding:0;border:1px solid var(--sg-line);border-radius:10px;background:var(--sg-paper);color:var(--sg-ink);font:13px/1.5 "Segoe UI",system-ui,sans-serif;overflow:hidden}
+.sg-panel{--sg-paper:#121418;--sg-surface:#191c22;--sg-ink:#e7e9ee;--sg-line:#30353f;--sg-accent:#e7a07e;--sg-muted:#a2a8b4;--sg-header-height:58px;box-sizing:border-box;width:98vw;height:96dvh;max-width:98vw;max-height:98dvh;padding:0;border:1px solid var(--sg-line);border-radius:10px;background:var(--sg-paper);color:var(--sg-ink);font:13px/1.5 "Segoe UI",system-ui,sans-serif;overflow:hidden}
 .sg-panel::backdrop{background:rgb(5 7 10 / 80%)}
 .sg-panel *{box-sizing:border-box}
 .sg-panel [hidden]{display:none!important}

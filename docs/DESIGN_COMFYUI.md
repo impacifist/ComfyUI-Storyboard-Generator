@@ -6,7 +6,7 @@ Reference: the installed MiniMax H3 Prompt Writer's reference workspace and shel
 
 - Palette: canvas `#121418`, input panels `#191c22`, borders `#30353f`, text `#e7e9ee`, secondary text `#a2a8b4`, accent `#e7a07e`. The accent marks current navigation and actions, not decorative backgrounds.
 - Typography: local Segoe UI/system fonts at 13px for controls and 16px for headings; Consolas/system monospace only for exported prompt text. No font downloads.
-- Layout: one main navigation for Create, Library, Convert and Clip prompts. Desktop creation/conversion pairs a 340–430px input column with a flexible output column. A fixed bottom action bar keeps the current action visible. Small screens stack the columns and keep the action bar reachable.
+- Layout: one main navigation for Create, Library, Convert and Clip prompts. Creation pairs a 340–430px input column with an output column. Conversion uses the full panel width: settings and references above, results below, with one scroll area for the whole conversion workspace. Clip planning cards spread across available width. The panel occupies 98% of the viewport width without a desktop pixel cap. A fixed bottom action bar keeps the current action visible. Small screens retain a single column and keep the action bar reachable.
 - Principles: no introduction/marketing block, duplicate branding or numbered steps; plain action labels; advanced source/reference/memory information folds away; the selected output stays readable.
 
 ```text
@@ -17,6 +17,8 @@ Characters / scene               Editable shots / output text
 Optional settings                
                           Save and convert / Create or Convert
 ```
+
+Conversion uses a different reading order: full-width model/reference/clip settings, followed by full-width prompt results. The conversion controls own one scroll area on desktop; settings and output no longer scroll independently. The original storyboard disclosure remains available above settings, and the bottom conversion action remains fixed.
 
 ## Scope and review
 

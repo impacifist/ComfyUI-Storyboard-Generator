@@ -67,8 +67,13 @@ body.comfy-workbench { font: 13px/1.55 "Segoe UI", "Malgun Gothic", system-ui, s
 .comfy-workbench .state-json { background: #111419; color: var(--ink); }
 .comfy-workbench :is(.beats, .board-toolbar, .revision-box, .review-section) { border-color: var(--line); background: transparent; }
 .comfy-workbench .conversion-source-bar { background: var(--paper); border-color: var(--line); padding: 12px 16px; margin-bottom: 16px; }
-.comfy-workbench .conversion-workspace { display: grid; grid-template-columns: minmax(340px, 430px) minmax(0, 1fr); gap: 20px; align-items: start; }
+.comfy-workbench .conversion-workspace { display: grid; grid-template-columns: minmax(0, 1fr); gap: 20px; align-items: start; }
+.comfy-workbench #conversion-controls { min-width: 0; }
 .comfy-workbench .conversion-settings { padding: 18px; border-radius: 8px; }
+.comfy-workbench .conversion-settings > .conversion-settings-section:has(#conversion-plan) { min-width: 0; }
+.comfy-workbench #conversion-plan-result { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr)); gap: 12px; }
+.comfy-workbench #conversion-plan-result > :not(.library-card) { grid-column: 1 / -1; }
+.comfy-workbench .reference-composer > label:has(textarea) { grid-column: 1 / -1; }
 .comfy-workbench .conversion-settings :is(input, select, textarea) { background: #111419; min-height: 36px; }
 .comfy-workbench .conversion-settings label { color: #c5cad4; }
 .comfy-workbench .conversion-original { padding: 12px 0 0; border: 0; }
@@ -83,7 +88,7 @@ body.comfy-workbench { font: 13px/1.55 "Segoe UI", "Malgun Gothic", system-ui, s
 .comfy-workbench #conversion-plan-result .library-card { background: #20242b; border-color: var(--line); }
 .comfy-workbench .conversion-submit { border-color: var(--line); padding-bottom: 0; }
 .comfy-workbench #conversion-results { margin: 0; min-width: 0; grid-template-columns: 1fr; }
-.comfy-workbench #conversion-results:empty::before { content: attr(data-empty); display: block; border: 1px dashed var(--line); padding: 80px 28px; color: var(--muted); text-align: center; border-radius: 8px; }
+.comfy-workbench #conversion-results:empty { display: none; }
 .comfy-workbench :is(.prompt-output, .conversion-meta, .source-overview) { color: var(--ink); background: #111419; border-color: var(--line); }
 .comfy-workbench .prompt-output { font: 13px/1.75 Consolas, monospace; padding: 16px; }
 .comfy-workbench .library-toolbar, .comfy-workbench .library-list-heading, .comfy-workbench #library-items .library-row { background: var(--paper); border-color: var(--line); }
@@ -126,9 +131,11 @@ body.comfy-workbench { font: 13px/1.55 "Segoe UI", "Malgun Gothic", system-ui, s
   .comfy-workbench #creation-view { align-items: stretch; }
   .comfy-workbench :is(.input-column, .board-column) { overflow: auto; scrollbar-width: thin; scrollbar-color: #454d5c transparent; }
   .comfy-workbench #conversion-view { display: flex; flex-direction: column; overflow: hidden; }
-  .comfy-workbench #conversion-controls { flex: 1; min-height: 0; }
-  .comfy-workbench .conversion-workspace { height: 100%; grid-template-rows: minmax(0, 1fr); align-items: stretch; }
-  .comfy-workbench .conversion-settings, .comfy-workbench #conversion-results { min-height: 0; overflow: auto; scrollbar-width: thin; scrollbar-color: #454d5c transparent; }
+  .comfy-workbench #conversion-controls { flex: 1; min-height: 0; overflow: auto; scrollbar-width: thin; scrollbar-color: #454d5c transparent; }
+  .comfy-workbench .conversion-workspace { height: auto; align-items: start; }
+  .comfy-workbench #conversion-controls:has(#conversion-results:not(:empty)) .conversion-workspace { grid-template-columns: minmax(0, 1fr); }
+  .comfy-workbench #conversion-controls:has(#conversion-results:not(:empty)) .conversion-settings .form-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+  .comfy-workbench .conversion-settings, .comfy-workbench #conversion-results { min-height: 0; overflow: visible; }
   .comfy-workbench #conversion-results { align-content: start; }
   .comfy-workbench #library-home { overflow: auto; }
   .comfy-workbench #conversion-controls:has(#conversion-results:not(:empty)) { display: block; }
