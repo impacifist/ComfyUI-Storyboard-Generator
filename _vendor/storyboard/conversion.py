@@ -6,7 +6,8 @@ import json
 import re
 from decimal import Decimal, ROUND_CEILING
 
-from . import clip_flow, clip_planning, conversion_structure, guides, prompt_renderer, providers, references, speech
+from . import (clip_flow, clip_planning, conversion_structure, guides, instruction_translation,
+               prompt_renderer, providers, references, speech)
 from .engine import validate_document
 from .schema import ValidationError
 
@@ -24,10 +25,17 @@ def compile_directions(document, layout, profile, assets, provider, model, syste
     request = {**request, "shot_contract": conversion_structure.contract(layout)}
     system += "\nSHOT IDENTITY CONTRACT: " + conversion_structure.RULES
     user = request
+    translation_source = None
+    translation_reordered = []
     for attempt in range(2):
         draft = None
+        translated_fields = []
+        language_failure = False
         try:
-            draft = providers.generate_json(provider, model, system, json.dumps(user, ensure_ascii=False), schema)
+            if translation_source is not None:
+                draft, translated_fields = instruction_translation.repair(translation_source, provider, model)
+            else:
+                draft = providers.generate_json(provider, model, system, json.dumps(user, ensure_ascii=False), schema)
             # Also validate here so alternate adapters cannot bypass the contract.
             prompt_renderer.validate(draft, schema, "AI 응답")
             draft, reordered = conversion_structure.align(layout, draft)
@@ -39,16 +47,19 @@ def compile_directions(document, layout, profile, assets, provider, model, syste
             layout.clear()
             layout.update(candidate)
             report = {"attempts": attempt + 1, "repaired": bool(attempt), "issues": errors}
-            if reordered:
-                report["reordered_by_id"] = reordered
+            if reordered or translation_reordered:
+                report["reordered_by_id"] = list(dict.fromkeys(translation_reordered + reordered))
+            if translated_fields:
+                report.update(repair_kind="instruction_translation", translated_fields=translated_fields)
             return draft, result, manifest, report
         except providers.OutputValidationError as error:
             draft = error.output
             message = str(error)
         except ValidationError as error:
-            if draft is None:
+            if draft is None and translation_source is None:
                 raise  # Configuration/authorization errors must not create another call.
             message = str(error)
+            language_failure = isinstance(error, prompt_renderer.EnglishInstructionError)
         try:
             prompt_renderer.validate(draft, OUTPUT, "AI 응답")
             structure_issues = conversion_structure.issues(layout, draft, allow_reorder=True)
@@ -57,6 +68,10 @@ def compile_directions(document, layout, profile, assets, provider, model, syste
                 message = "클립·컷 구조 불일치: " + " | ".join(structure_issues)
             elif boundary_issues:
                 message = "공유 경계 상태 검증 실패: " + "; ".join(boundary_issues)
+            elif language_failure and not attempt:
+                if 0 < len(instruction_translation.invalid_fields(draft)) <= 100:
+                    translation_source = copy.deepcopy(draft)
+                    translation_reordered = reordered
         except ValidationError:
             pass  # The original schema path is the useful repair instruction.
         if isinstance(draft, dict) and isinstance(draft.get("warnings"), list):

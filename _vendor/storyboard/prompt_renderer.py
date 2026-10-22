@@ -22,11 +22,15 @@ DIRECTOR_OUTPUT = obj(clips=array(obj(
     warnings=array(TEXT), notes=array(TEXT))
 
 
+class EnglishInstructionError(ValidationError):
+    """A rendered instruction needs translation; source speech is not affected."""
+
+
 def require_english(value, path):
     # No dependency or probabilistic language guess: reject non-English scripts and
     # combining accents. Punctuation such as curly quotes and dashes remains valid.
     if any(unicodedata.category(c)[0] in "LM" and not ("A" <= c <= "Z" or "a" <= c <= "z") for c in value):
-        raise ValidationError(f"{path}: English-only instructions required; translate this field into English")
+        raise EnglishInstructionError(f"{path}: English-only instructions required; translate this field into English")
 
 
 def render_labels(document):
@@ -52,6 +56,10 @@ def output_schema(document, layout):
     # TEXT is deliberately shared in base contracts. Break aliases before adding enums.
     schema = json.loads(json.dumps(DIRECTOR_OUTPUT))
     clip = schema["properties"]["clips"]["items"]["properties"]
+    clip["shots"]["items"]["properties"]["deliveries"]["items"]["description"] = (
+        "English translation of the assigned source dialogue delivery instruction, never spoken dialogue. "
+        "Use unaccented English letters; do not copy non-English source instructions. "
+        "Keep the original array length and line order; empty only when the source delivery is empty.")
     clip["id"]["enum"] = [c["id"] for c in layout["clips"]]
     clip["shots"]["items"]["properties"]["id"]["enum"] = list(dict.fromkeys(
         s["id"] for c in layout["clips"] for s in c["shots"]))

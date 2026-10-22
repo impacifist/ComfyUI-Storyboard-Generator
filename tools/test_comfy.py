@@ -40,16 +40,21 @@ def main(comfy, python):
         payload = {"id": board, "selected": [s["id"] for s in doc["story"]["shots"]], "split_mode": "auto", "limit": 15,
                    "clip_durations": {"C01": 13, "C02": 13, "C03": 13}, "guide_id": "ltx-2.5-text", "provider": "openai", "model": "mock"}
         def reordered_ai(*args):
+            request = json.loads(args[3])
+            if 'instruction_translations' in request:
+                return {'translations': {item['key']: 'With concern' for item in request['instruction_translations']}}
             draft = fake_ai(*args)
             draft["clips"].reverse()
             for clip in draft["clips"]:
                 clip["shots"].reverse()
+            draft["clips"][-1]["shots"][-1]["deliveries"][0] = '걱정스럽게'
             return draft
 
         with patch.object(service.providers, "generate_json", side_effect=reordered_ai):
             first = service.dispatch("/conversion/compile", payload)
             second = service.dispatch("/conversion/compile", payload)
         assert first["result"]["validation_report"]["reordered_by_id"]
+        assert first["result"]["validation_report"]["repair_kind"] == 'instruction_translation'
         with socket.socket() as sock:
             sock.bind(("127.0.0.1", 0))
             port = sock.getsockname()[1]
@@ -272,6 +277,7 @@ def main(comfy, python):
                         expect(studio.locator("#ollama-memory-status")).to_contain_text("confirmed")
                         assert conversion_calls[-1]["unload_ollama_after"] is True
                         expect(studio.locator("#conversion-results")).to_contain_text("Clip and shot order was restored using the original IDs.")
+                        expect(studio.locator("#conversion-results")).to_contain_text("Instructions translated into English: 1.")
                         assert conversion_calls[-1]["guide_id"] == "ltx-2.5-image"
                         assert conversion_calls[-1]["references"] == []
                         studio.locator("#ollama-auto-unload").uncheck()

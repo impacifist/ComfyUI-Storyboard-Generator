@@ -1006,7 +1006,8 @@ function renderConversion(result, date = "", remember = true, savedId = null) {
   heading.append(el("h3", "", tr("{0} · {1}", {0: result.target_model, 1: date ? new Date(date).toLocaleString(I18n.locale) : tr("방금 변환")})));
   const metadata = el("details", "result-metadata"); metadata.append(el("summary", "", tr("생성 정보와 가이드 출처")), el("p", "helper", tr("가이드 출처: {0}", {0: result.guide_source})));
   section.append(heading, el("p", "helper", I18n.system(result.review_note)), metadata);
-  if (result.validation_report?.repaired) metadata.append(el("p", "helper", tr("출력 오류를 1회 자동 교정한 뒤 다시 검증하여 저장했습니다.")));
+  if (result.validation_report?.repair_kind === "instruction_translation") metadata.append(el("p", "helper", tr("영어로 변환되지 않은 지시문 {0}개만 교정하고 다시 검증하여 저장했습니다. 원본 대사는 유지됩니다.", {0: result.validation_report.translated_fields.length})));
+  else if (result.validation_report?.repaired) metadata.append(el("p", "helper", tr("출력 오류를 1회 자동 교정한 뒤 다시 검증하여 저장했습니다.")));
   if (result.validation_report?.reordered_by_id?.length) metadata.append(el("p", "helper", tr("원본 ID에 맞춰 클립·컷 순서를 복원했습니다. 내용과 대사 연결은 유지됩니다.")));
   if (result.output.notes?.length) {
     const notes = el("details", "conversion-notes"); notes.append(el("summary", "", tr("검토 메모")));

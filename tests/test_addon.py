@@ -234,3 +234,39 @@ class AddonTests(unittest.TestCase):
         self.assertEqual(len(service.library.conversions(self.board)), 1)
         self.assertEqual(service.library.conversions(self.board)[0]['id'], first['id'])
         self.assertEqual(service.library.load(self.board), self.document)
+
+    def test_targeted_delivery_translation_preserves_portable_strings_and_source(self):
+        calls = []
+
+        def translate(provider, model, system, user, schema):
+            data = json.loads(user)
+            calls.append(data)
+            if 'instruction_translations' in data:
+                self.assertNotIn('plan', data)
+                return {'translations': {item['key']: 'With concern' for item in data['instruction_translations']}}
+            draft = direction_output(data['plan'])
+            draft['clips'][0]['shots'][0]['deliveries'][0] = '걱정스럽게'
+            return draft
+
+        with patch.object(service.providers, 'generate_json', side_effect=translate):
+            result = service.dispatch('/conversion/compile', {**self.payload, 'provider': 'lmstudio'})
+        self.assertEqual(len(calls), 2)
+        self.assertEqual(result['result']['validation_report']['repair_kind'], 'instruction_translation')
+        self.assertEqual(service.library.load(self.board), self.document)
+        bundle = service.dispatch('/bundle/' + result['id'])
+        self.assertIn('With concern', bundle['clips'][0]['prompt'])
+        for clip in bundle['clips']:
+            self.assertEqual(nodes.StoryboardClipPrompt().output_clip(clip_snapshot.encode_snapshot(clip))[0], clip['prompt'])
+
+    def test_failed_delivery_translation_preserves_prior_saved_conversion(self):
+        first = self.compile()
+        layout = service.conversion.preflight(self.document, self.payload)[0]
+        invalid = direction_output(layout)
+        invalid['clips'][0]['shots'][0]['deliveries'][0] = '걱정스럽게'
+        with patch.object(service.providers, 'generate_json', side_effect=[invalid, {'translations': {'T001': '걱정스럽게'}}]) as ai:
+            with self.assertRaisesRegex(service.ValidationError, '1회.*deliveries'):
+                service.dispatch('/conversion/compile', self.payload)
+        self.assertEqual(ai.call_count, 2)
+        self.assertEqual(len(service.library.conversions(self.board)), 1)
+        self.assertEqual(service.library.conversions(self.board)[0]['id'], first['id'])
+        self.assertEqual(service.library.load(self.board), self.document)
