@@ -1,0 +1,2 @@
+# Pinned snapshots are byte-verified. Never convert their line endings on checkout.
+_vendor/** -text

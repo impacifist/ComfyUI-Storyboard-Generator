@@ -22,7 +22,10 @@ def sync(repository, revision):
             path = DESTINATION / name
             if not path.is_file() or hashlib.sha256(path.read_bytes()).hexdigest() != digest:
                 raise RuntimeError("Vendor snapshot has local changes: " + name)
-    archive = subprocess.check_output(["git", "-C", repository, "archive", commit, "--", *PATHS])
+    # Git archive otherwise applies core.autocrlf on Windows: the same commit
+    # would acquire different manifest hashes on different operating systems.
+    archive = subprocess.check_output(["git", "-c", "core.autocrlf=false", "-C", repository,
+                                       "archive", commit, "--", *PATHS])
     files = {}
     with tarfile.open(fileobj=io.BytesIO(archive)) as tar:
         for item in tar.getmembers():
@@ -35,7 +38,8 @@ def sync(repository, revision):
             files[item.name] = hashlib.sha256(data).hexdigest()
             path.parent.mkdir(parents=True, exist_ok=True)
             path.write_bytes(data)
-    manifest.write_text(json.dumps({"repository": UPSTREAM, "commit": commit, "files": files}, indent=2) + "\n", encoding="utf-8")
+    manifest.write_text(json.dumps({"repository": UPSTREAM, "commit": commit, "files": files}, indent=2) + "\n",
+                        encoding="utf-8", newline="\n")
     print(f"Imported {len(files)} tracked files at {commit}")
 
 

@@ -25,3 +25,5 @@ python tools/test_comfy.py --comfy <COMFY_DIRECTORY> --python <COMFY_PYTHON> --d
 The build destination is restricted to ignored `dist/` paths. Only `index.html`, `demo.css`, `demo.js`, `workflow.js`, the built public `data.json` and `.nojekyll` are deployed. Private settings, storage, the whole checkout, videos and screenshots are never copied into the Pages artifact. The sample JSON files were copied from the already-public standalone examples and validated before inclusion. Do not replace them with raw user feedback or private storyboards.
 
 `.github/workflows/pages.yml` runs unit tests, builds this allowlist, and deploys only `dist/site` through GitHub Pages. Build has read-only repository permissions; the deployment job has only Pages/OIDC permissions. Runtime nodes and the standalone app are unaffected.
+
+The vendored source uses canonical Git archive bytes (`core.autocrlf=false`) and `_vendor/** -text` attributes so Linux and Windows verify the same hashes. The CI runner installs the existing ComfyUI `aiohttp` dependency for route tests; the site itself has no Python runtime or client dependencies.
