@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Try the ComfyUI Storyboard Generator sample: explore characters and shots, compare video prompts and export connected STRING nodes.">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src 'self'; object-src 'none'; base-uri 'none'; form-action 'none'">
+  <title>Storyboard Generator · Interactive sample</title>
+  <link rel="stylesheet" href="./demo.css">
+  <script src="./demo.js" type="module"></script>
+</head>
+<body>
+  <a class="skip" href="#workspace">Skip to workspace</a>
+  <header class="topbar">
+    <a class="brand" href="./"><span class="brand-icon" aria-hidden="true">▦</span><span>Storyboard Generator<small>ComfyUI</small></span></a>
+    <div class="header-actions"><span class="sample-badge" data-copy="sample">Interactive sample</span>
+      <label class="language"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><ellipse cx="12" cy="12" rx="4" ry="9"/><path d="M3 12h18M5 6.5h14M5 17.5h14"/></svg><select id="language" aria-label="Language"><option value="en">English</option><option value="ko">한국어</option><option value="ja">日本語</option></select></label>
+      <a class="button install" href="https://github.com/impacifist/ComfyUI-Storyboard-Generator#readme" data-copy="install">Install in ComfyUI ↗</a>
+    </div>
+  </header>
+  <div class="demo-notice"><span class="status-dot" aria-hidden="true"></span><p data-copy="notice">Explore an authored sample. No AI calls, API keys or uploads. Generation and execution require the installed app.</p></div>
+  <div class="layout">
+    <aside class="inspector" aria-labelledby="scenario-title">
+      <div class="section-heading"><span class="eyebrow" data-copy="scenario">SAMPLE SCENARIO</span><button id="reset" class="quiet" data-copy="reset">Reset</button></div>
+      <h1 id="scenario-title"></h1><p id="scenario-summary" class="muted"></p>
+      <div class="scenario-stats"><span data-copy="duration">Duration</span><strong>30s</strong><span data-copy="shots">Shots</span><strong>6</strong></div>
+      <h2 data-copy="characters">Characters</h2><div id="characters"></div>
+      <details class="scene-details"><summary data-copy="scene">Scene & direction</summary><div id="scene-details"></div></details>
+      <p class="aside-help" data-copy="asideHelp">These personas and shots are a fixed example. Install the app to create stories from your own characters.</p>
+    </aside>
+    <main id="workspace" tabindex="-1">
+      <nav class="tabs" role="tablist" aria-label="Sample workflow">
+        <button id="tab-story" role="tab" aria-selected="true" aria-controls="story-panel" data-copy="story">Storyboard</button>
+        <button id="tab-prompts" role="tab" aria-selected="false" aria-controls="prompts-panel" data-copy="prompts" tabindex="-1">Video prompts</button>
+        <button id="tab-nodes" role="tab" aria-selected="false" aria-controls="nodes-panel" data-copy="nodes" tabindex="-1">STRING nodes</button>
+      </nav>
+      <section id="story-panel" role="tabpanel" aria-labelledby="tab-story">
+        <div class="workspace-heading"><div><h2 data-copy="storyTitle">A story, shot by shot</h2><p class="muted" data-copy="storyHelp">Open a shot to inspect its acting, dialogue and camera direction.</p></div><button id="next" class="primary" data-copy="seePrompts">See video prompts →</button></div>
+        <div id="shots" class="shot-grid"></div>
+      </section>
+      <section id="prompts-panel" role="tabpanel" aria-labelledby="tab-prompts" hidden>
+        <div class="workspace-heading"><div><h2 data-copy="promptsTitle">From shots to video prompts</h2><p class="muted" data-copy="promptHelp">Compare sample outputs built with the real formatter. Model choice changes the syntax.</p></div><button id="download-txt" class="secondary" data-copy="downloadTxt">Download TXT</button></div>
+        <div class="controls"><label><span data-copy="model">Video model</span><select id="model"><option value="minimax-h3-text">MiniMax H3</option><option value="seedance-2-text">Seedance 2.0</option><option value="ltx-2.5-text">LTX 2.5</option></select></label><label><span data-copy="clipLength">Maximum clip length</span><select id="limit"><option value="15">15s</option><option value="10">10s</option></select></label><div class="control-summary" id="clip-summary"></div></div>
+        <div id="timeline" class="timeline" aria-label="Clip plan"></div><div id="clips" class="clips"></div>
+        <div class="action-bar"><p id="selection-count" class="muted"></p><button id="add-nodes" class="primary" data-copy="addNodes">Add selected clips as nodes →</button></div>
+      </section>
+      <section id="nodes-panel" role="tabpanel" aria-labelledby="tab-nodes" hidden>
+        <div class="workspace-heading"><div><h2 data-copy="nodesTitle">One clip. One STRING output.</h2><p class="muted" data-copy="nodeHelp">Connection preview: saved prompt → Preview Any. Video sampling is not running in this page.</p></div><button id="export-workflow" class="secondary" data-copy="exportWorkflow">Download workflow JSON</button></div>
+        <div id="node-empty" class="empty"><span aria-hidden="true">◇</span><h3 data-copy="noNodes">Choose the clips you want to use</h3><p data-copy="noNodesHelp">Add them from Video prompts, then connect each saved prompt to your video workflow.</p><button id="back-prompts" class="primary" data-copy="chooseClips">Choose clips</button></div>
+        <div id="node-canvas" class="node-canvas"></div>
+        <p class="helper" data-copy="workflowHelp">The downloaded workflow contains real Storyboard Clip Prompt → Preview Any connections. Install the custom node pack before opening it in ComfyUI. Running these nodes reads saved text; it does not generate video or call an LLM.</p>
+      </section>
+      <div id="status" role="status" aria-live="polite"></div>
+    </main>
+  </div>
+  <dialog id="shot-dialog" aria-labelledby="shot-title"><div class="dialog-header"><h2 id="shot-title"></h2><button id="close-shot" class="secondary" data-copy="close">Close</button></div><div id="shot-detail"></div></dialog>
+  <noscript>This interactive sample needs JavaScript. No account or API key is required.</noscript>
+</body>
+</html>

@@ -1,0 +1,515 @@
+{
+  "schema_version": 1,
+  "brief": {
+    "title": "雨がやむ前に",
+    "characters": [
+      {
+        "id": "haru",
+        "name": "ハル",
+        "personality": "人見知りで思慮深い。親しい相手には少しお茶目な一面を見せる。",
+        "speech": "一人称は私。親しい同級生には短い常体で話す。頼み事をするときは言いよどむ。例：『一緒に帰ってもいい？』",
+        "desire": "ユナと一緒に帰りたい。",
+        "fear": "気まずくなって今の関係が変わること。",
+        "habit": "緊張すると袖口をつまむ。",
+        "fixed": "短い黒髪、紺色の制服。傘を持っていない。"
+      },
+      {
+        "id": "yuna",
+        "name": "ユナ",
+        "personality": "相手の気持ちによく気づき、さりげなく気を配る。返事を急かさない。",
+        "speech": "一人称は私。同級生には穏やかな常体。提案は柔らかく、相手が返事をしやすい言い方にする。例：『一緒に帰ろう？』",
+        "desire": "ハルとの距離を少し縮めたい。",
+        "fear": "ハルに無理をさせること。",
+        "habit": "話しかけられると手を止めて聞く。",
+        "fixed": "長い黒髪、紺色の制服。透明な傘を一本持っている。"
+      }
+    ],
+    "relationship": "お互いを大切に思っているクラスメイト。まだ気持ちは言葉にしていない。",
+    "location": "放課後の教室",
+    "time": "夕方",
+    "atmosphere": "窓をたたく小雨と、柔らかな夕日の光。静かで穏やかな空気。",
+    "situation": "ハルは窓際に立ち、隣の席ではユナが帰り支度をしている。",
+    "intent": "ハルのためらいを、袖口に触れる小さな仕草で伝える。ユナが気づき、自然に一緒に帰ろうと誘う。",
+    "ending": "ハルが誘いを受け入れ、二人は一本の傘を持って教室を出る。",
+    "required": "透明な傘\n袖口に触れる仕草",
+    "excluded": "直接的な告白\n大げさなギャグ",
+    "style": "日常系の2Dアニメ。控えめな芝居と反応のカットを中心に、最後は静かなワイドショット。",
+    "duration": 30,
+    "shot_count": 6
+  },
+  "story": {
+    "summary": "一緒に帰ろうと言い出せないハルに、ユナがそっと傘を差し出す。",
+    "beats": [
+      "袖口に表れるためらい",
+      "気持ちに気づくユナ",
+      "並んで帰る二人"
+    ],
+    "assumptions": [
+      "紹介用に手作業で作成したサンプルです。AIの生成結果ではありません。"
+    ],
+    "shots": [
+      {
+        "id": "S01",
+        "scene_id": "SC01",
+        "duration": 5.0,
+        "purpose": "二人の距離を見せる",
+        "visual": "机に夕日の光が差し込み、窓には雨粒が伝う。",
+        "actions": [
+          "ハルは窓の外を見つめ、ユナは通学かばんを閉じる。"
+        ],
+        "dialogue": [
+          {
+            "speaker": "haru",
+            "text": "まだ降ってるね。",
+            "delivery": "自然な間を取り、穏やかな声で。"
+          }
+        ],
+        "camera": {
+          "size": "ワイド",
+          "angle": "目線の高さ",
+          "movement": "固定",
+          "transition": "カット"
+        },
+        "start_state": {
+          "characters": [
+            {
+              "character_id": "haru",
+              "position": "教室の窓際",
+              "pose": "立って袖口をつまんでいる",
+              "gaze": "窓の外の雨",
+              "emotion": "ためらい"
+            },
+            {
+              "character_id": "yuna",
+              "position": "隣の机のそば",
+              "pose": "かばんの横に立っている",
+              "gaze": "ハルの方",
+              "emotion": "相手に注意を向けている"
+            }
+          ],
+          "props": [
+            {
+              "name": "透明な傘",
+              "holder": "yuna",
+              "position": "ユナのかばんの横"
+            }
+          ]
+        },
+        "end_state": {
+          "characters": [
+            {
+              "character_id": "haru",
+              "position": "教室の窓際",
+              "pose": "立って袖口をつまんでいる",
+              "gaze": "窓の外の雨",
+              "emotion": "ためらい"
+            },
+            {
+              "character_id": "yuna",
+              "position": "隣の机のそば",
+              "pose": "かばんの横に立っている",
+              "gaze": "ハルの方",
+              "emotion": "相手に注意を向けている"
+            }
+          ],
+          "props": [
+            {
+              "name": "透明な傘",
+              "holder": "yuna",
+              "position": "ユナのかばんの横"
+            }
+          ]
+        },
+        "continuity": "人物の画面内の向きと、柔らかな夕日の光を保つ。",
+        "locked": true
+      },
+      {
+        "id": "S02",
+        "scene_id": "SC01",
+        "duration": 5.0,
+        "purpose": "ためらいを仕草で伝える",
+        "visual": "ハルが袖口をつまむ指先をアップで捉える。",
+        "actions": [
+          "ハルはユナをちらりと見て、目を伏せる。"
+        ],
+        "dialogue": [
+          {
+            "speaker": "haru",
+            "text": "傘、忘れちゃった。",
+            "delivery": "自然な間を取り、穏やかな声で。"
+          }
+        ],
+        "camera": {
+          "size": "クローズアップ",
+          "angle": "目線の高さ",
+          "movement": "固定",
+          "transition": "カット"
+        },
+        "start_state": {
+          "characters": [
+            {
+              "character_id": "haru",
+              "position": "教室の窓際",
+              "pose": "立って袖口をつまんでいる",
+              "gaze": "窓の外の雨",
+              "emotion": "ためらい"
+            },
+            {
+              "character_id": "yuna",
+              "position": "隣の机のそば",
+              "pose": "かばんの横に立っている",
+              "gaze": "ハルの方",
+              "emotion": "相手に注意を向けている"
+            }
+          ],
+          "props": [
+            {
+              "name": "透明な傘",
+              "holder": "yuna",
+              "position": "ユナのかばんの横"
+            }
+          ]
+        },
+        "end_state": {
+          "characters": [
+            {
+              "character_id": "haru",
+              "position": "教室の窓際",
+              "pose": "立って袖口をつまんでいる",
+              "gaze": "窓の外の雨",
+              "emotion": "ためらい"
+            },
+            {
+              "character_id": "yuna",
+              "position": "隣の机のそば",
+              "pose": "かばんの横に立っている",
+              "gaze": "ハルの方",
+              "emotion": "相手に注意を向けている"
+            }
+          ],
+          "props": [
+            {
+              "name": "透明な傘",
+              "holder": "yuna",
+              "position": "ユナのかばんの横"
+            }
+          ]
+        },
+        "continuity": "人物の画面内の向きと、柔らかな夕日の光を保つ。",
+        "locked": false
+      },
+      {
+        "id": "S03",
+        "scene_id": "SC01",
+        "duration": 5.0,
+        "purpose": "返事の前に反応を見せる",
+        "visual": "ユナが帰り支度の手を止め、ハルの方を向く。",
+        "actions": [
+          "ユナは表情を和らげ、透明な傘を手に取る。"
+        ],
+        "dialogue": [
+          {
+            "speaker": "yuna",
+            "text": "私の傘、一緒に使おうよ。",
+            "delivery": "自然な間を取り、穏やかな声で。"
+          }
+        ],
+        "camera": {
+          "size": "ミディアム",
+          "angle": "目線の高さ",
+          "movement": "ゆっくり寄る",
+          "transition": "カット"
+        },
+        "start_state": {
+          "characters": [
+            {
+              "character_id": "haru",
+              "position": "教室の窓際",
+              "pose": "立って袖口をつまんでいる",
+              "gaze": "窓の外の雨",
+              "emotion": "ためらい"
+            },
+            {
+              "character_id": "yuna",
+              "position": "隣の机のそば",
+              "pose": "かばんの横に立っている",
+              "gaze": "ハルの方",
+              "emotion": "相手に注意を向けている"
+            }
+          ],
+          "props": [
+            {
+              "name": "透明な傘",
+              "holder": "yuna",
+              "position": "ユナのかばんの横"
+            }
+          ]
+        },
+        "end_state": {
+          "characters": [
+            {
+              "character_id": "haru",
+              "position": "教室の窓際",
+              "pose": "立って袖口をつまんでいる",
+              "gaze": "窓の外の雨",
+              "emotion": "ためらい"
+            },
+            {
+              "character_id": "yuna",
+              "position": "隣の机のそば",
+              "pose": "かばんの横に立っている",
+              "gaze": "ハルの方",
+              "emotion": "相手に注意を向けている"
+            }
+          ],
+          "props": [
+            {
+              "name": "透明な傘",
+              "holder": "yuna",
+              "position": "ユナの右手"
+            }
+          ]
+        },
+        "continuity": "人物の画面内の向きと、柔らかな夕日の光を保つ。",
+        "locked": false
+      },
+      {
+        "id": "S04",
+        "scene_id": "SC01",
+        "duration": 5.0,
+        "purpose": "自然に誘う",
+        "visual": "ユナが傘を少し持ち上げ、自分の隣を空ける。",
+        "actions": [
+          "ユナは急かさずに待つ。ハルがそっと顔を上げる。"
+        ],
+        "dialogue": [
+          {
+            "speaker": "yuna",
+            "text": "一緒に帰ろう？",
+            "delivery": "自然な間を取り、穏やかな声で。"
+          }
+        ],
+        "camera": {
+          "size": "ツーショット",
+          "angle": "目線の高さ",
+          "movement": "固定",
+          "transition": "カット"
+        },
+        "start_state": {
+          "characters": [
+            {
+              "character_id": "haru",
+              "position": "教室の窓際",
+              "pose": "立って袖口をつまんでいる",
+              "gaze": "窓の外の雨",
+              "emotion": "ためらい"
+            },
+            {
+              "character_id": "yuna",
+              "position": "隣の机のそば",
+              "pose": "かばんの横に立っている",
+              "gaze": "ハルの方",
+              "emotion": "相手に注意を向けている"
+            }
+          ],
+          "props": [
+            {
+              "name": "透明な傘",
+              "holder": "yuna",
+              "position": "ユナの右手"
+            }
+          ]
+        },
+        "end_state": {
+          "characters": [
+            {
+              "character_id": "haru",
+              "position": "教室の窓際",
+              "pose": "立って袖口をつまんでいる",
+              "gaze": "窓の外の雨",
+              "emotion": "ためらい"
+            },
+            {
+              "character_id": "yuna",
+              "position": "隣の机のそば",
+              "pose": "かばんの横に立っている",
+              "gaze": "ハルの方",
+              "emotion": "相手に注意を向けている"
+            }
+          ],
+          "props": [
+            {
+              "name": "透明な傘",
+              "holder": "yuna",
+              "position": "ユナの右手"
+            }
+          ]
+        },
+        "continuity": "人物の画面内の向きと、柔らかな夕日の光を保つ。",
+        "locked": false
+      },
+      {
+        "id": "S05",
+        "scene_id": "SC01",
+        "duration": 5.0,
+        "purpose": "緊張がほどける",
+        "visual": "ハルの手が袖口を離れ、口元に小さな笑みが浮かぶ。",
+        "actions": [
+          "ハルはうなずき、ユナに一歩近づく。"
+        ],
+        "dialogue": [
+          {
+            "speaker": "haru",
+            "text": "……うん。ありがとう。",
+            "delivery": "自然な間を取り、穏やかな声で。"
+          }
+        ],
+        "camera": {
+          "size": "クローズアップ",
+          "angle": "目線の高さ",
+          "movement": "固定",
+          "transition": "カット"
+        },
+        "start_state": {
+          "characters": [
+            {
+              "character_id": "haru",
+              "position": "教室の窓際",
+              "pose": "立って袖口をつまんでいる",
+              "gaze": "窓の外の雨",
+              "emotion": "ためらい"
+            },
+            {
+              "character_id": "yuna",
+              "position": "隣の机のそば",
+              "pose": "かばんの横に立っている",
+              "gaze": "ハルの方",
+              "emotion": "相手に注意を向けている"
+            }
+          ],
+          "props": [
+            {
+              "name": "透明な傘",
+              "holder": "yuna",
+              "position": "ユナの右手"
+            }
+          ]
+        },
+        "end_state": {
+          "characters": [
+            {
+              "character_id": "haru",
+              "position": "教室の窓際",
+              "pose": "手の力を抜いてユナの隣に立っている",
+              "gaze": "ユナの方",
+              "emotion": "ほっとしている"
+            },
+            {
+              "character_id": "yuna",
+              "position": "隣の机のそば",
+              "pose": "かばんの横に立っている",
+              "gaze": "ハルの方",
+              "emotion": "相手に注意を向けている"
+            }
+          ],
+          "props": [
+            {
+              "name": "透明な傘",
+              "holder": "yuna",
+              "position": "ユナの右手"
+            }
+          ]
+        },
+        "continuity": "人物の画面内の向きと、柔らかな夕日の光を保つ。",
+        "locked": false
+      },
+      {
+        "id": "S06",
+        "scene_id": "SC01",
+        "duration": 5.0,
+        "purpose": "並んで教室を出る",
+        "visual": "夕日の差す教室で、二人が並んで出入り口へ向かう。",
+        "actions": [
+          "ユナは閉じた傘を持ち、ハルと歩調を合わせて歩く。"
+        ],
+        "dialogue": [
+          {
+            "speaker": "yuna",
+            "text": "じゃ、行こっか。",
+            "delivery": "自然な間を取り、穏やかな声で。"
+          }
+        ],
+        "camera": {
+          "size": "ワイド",
+          "angle": "目線の高さ",
+          "movement": "ゆっくり追う",
+          "transition": "カット"
+        },
+        "start_state": {
+          "characters": [
+            {
+              "character_id": "haru",
+              "position": "教室の窓際",
+              "pose": "手の力を抜いてユナの隣に立っている",
+              "gaze": "ユナの方",
+              "emotion": "ほっとしている"
+            },
+            {
+              "character_id": "yuna",
+              "position": "隣の机のそば",
+              "pose": "かばんの横に立っている",
+              "gaze": "ハルの方",
+              "emotion": "相手に注意を向けている"
+            }
+          ],
+          "props": [
+            {
+              "name": "透明な傘",
+              "holder": "yuna",
+              "position": "ユナの右手"
+            }
+          ]
+        },
+        "end_state": {
+          "characters": [
+            {
+              "character_id": "haru",
+              "position": "教室の出入り口",
+              "pose": "並んで歩いている",
+              "gaze": "廊下の方",
+              "emotion": "穏やか"
+            },
+            {
+              "character_id": "yuna",
+              "position": "教室の出入り口",
+              "pose": "並んで歩いている",
+              "gaze": "廊下の方",
+              "emotion": "穏やか"
+            }
+          ],
+          "props": [
+            {
+              "name": "透明な傘",
+              "holder": "yuna",
+              "position": "ユナの右手"
+            }
+          ]
+        },
+        "continuity": "人物の画面内の向きと、柔らかな夕日の光を保つ。",
+        "locked": false
+      }
+    ]
+  },
+  "provenance": {
+    "provider": "demo",
+    "model": "template",
+    "created_at": "2026-10-10T00:00:00+00:00",
+    "updated_at": "2026-10-10T00:00:00+00:00"
+  },
+  "history": [
+    {
+      "at": "2026-10-10T00:00:00+00:00",
+      "event": "紹介用の日本語サンプルを手作業で作成"
+    }
+  ]
+}

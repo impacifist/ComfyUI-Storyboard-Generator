@@ -1,0 +1,515 @@
+{
+  "schema_version": 1,
+  "brief": {
+    "title": "Before the rain stops",
+    "characters": [
+      {
+        "id": "haru",
+        "name": "Haru",
+        "personality": "Reserved, thoughtful, and playful with close friends.",
+        "speech": "Short, hesitant sentences; a soft voice.",
+        "desire": "Walk home with Yuna.",
+        "fear": "Making their friendship awkward.",
+        "habit": "Touches her sleeve when nervous.",
+        "fixed": "Short dark hair, navy school uniform, no umbrella."
+      },
+      {
+        "id": "yuna",
+        "name": "Yuna",
+        "personality": "Observant and considerate; never puts others on the spot.",
+        "speech": "Warm and direct, leaving room for a reply.",
+        "desire": "Get closer to Haru.",
+        "fear": "Making Haru uncomfortable.",
+        "habit": "Pauses what she is doing to listen.",
+        "fixed": "Long dark hair, navy school uniform, one clear umbrella."
+      }
+    ],
+    "relationship": "Classmates who care about each other but have not said so aloud.",
+    "location": "A classroom after school",
+    "time": "Late afternoon",
+    "atmosphere": "Gentle rain, warm window light, comfortable silence.",
+    "situation": "Haru stands by the window. Yuna is packing her bag at the next desk.",
+    "intent": "Show Haru's hesitation through a small gesture. Let Yuna notice and offer to walk home together.",
+    "ending": "Haru accepts. They leave the classroom together under one umbrella.",
+    "required": "Clear umbrella\nSleeve gesture",
+    "excluded": "Explicit confession\nSlapstick",
+    "style": "Slice-of-life animation; restrained acting, reaction shots, and a quiet final wide shot.",
+    "duration": 30,
+    "shot_count": 6
+  },
+  "story": {
+    "summary": "A hesitant question becomes an invitation to share the walk home.",
+    "beats": [
+      "Haru hesitates",
+      "Yuna notices",
+      "An invitation, quietly accepted"
+    ],
+    "assumptions": [
+      "Authored documentation sample; not an AI-generated result."
+    ],
+    "shots": [
+      {
+        "id": "S01",
+        "scene_id": "SC01",
+        "duration": 5.0,
+        "purpose": "Establish the distance",
+        "visual": "Warm light falls across two desks. Rain beads on the window.",
+        "actions": [
+          "Haru watches the rain while Yuna closes her schoolbag."
+        ],
+        "dialogue": [
+          {
+            "speaker": "haru",
+            "text": "Still raining.",
+            "delivery": "Softly, with a natural pause"
+          }
+        ],
+        "camera": {
+          "size": "Wide",
+          "angle": "Eye level",
+          "movement": "Static",
+          "transition": "Cut"
+        },
+        "start_state": {
+          "characters": [
+            {
+              "character_id": "haru",
+              "position": "By the classroom window",
+              "pose": "Standing, holding her sleeve",
+              "gaze": "Toward the rain",
+              "emotion": "Hesitant"
+            },
+            {
+              "character_id": "yuna",
+              "position": "Beside the next desk",
+              "pose": "Standing beside her bag",
+              "gaze": "Toward Haru",
+              "emotion": "Attentive"
+            }
+          ],
+          "props": [
+            {
+              "name": "Clear umbrella",
+              "holder": "yuna",
+              "position": "Beside Yuna's schoolbag"
+            }
+          ]
+        },
+        "end_state": {
+          "characters": [
+            {
+              "character_id": "haru",
+              "position": "By the classroom window",
+              "pose": "Standing, holding her sleeve",
+              "gaze": "Toward the rain",
+              "emotion": "Hesitant"
+            },
+            {
+              "character_id": "yuna",
+              "position": "Beside the next desk",
+              "pose": "Standing beside her bag",
+              "gaze": "Toward Haru",
+              "emotion": "Attentive"
+            }
+          ],
+          "props": [
+            {
+              "name": "Clear umbrella",
+              "holder": "yuna",
+              "position": "Beside Yuna's schoolbag"
+            }
+          ]
+        },
+        "continuity": "Keep the screen direction and warm afternoon light consistent.",
+        "locked": true
+      },
+      {
+        "id": "S02",
+        "scene_id": "SC01",
+        "duration": 5.0,
+        "purpose": "Let the hesitation show",
+        "visual": "Close on Haru's fingers gathering the edge of her sleeve.",
+        "actions": [
+          "Haru glances at Yuna, then lowers her eyes."
+        ],
+        "dialogue": [
+          {
+            "speaker": "haru",
+            "text": "I forgot my umbrella.",
+            "delivery": "Softly, with a natural pause"
+          }
+        ],
+        "camera": {
+          "size": "Close-up",
+          "angle": "Eye level",
+          "movement": "Static",
+          "transition": "Cut"
+        },
+        "start_state": {
+          "characters": [
+            {
+              "character_id": "haru",
+              "position": "By the classroom window",
+              "pose": "Standing, holding her sleeve",
+              "gaze": "Toward the rain",
+              "emotion": "Hesitant"
+            },
+            {
+              "character_id": "yuna",
+              "position": "Beside the next desk",
+              "pose": "Standing beside her bag",
+              "gaze": "Toward Haru",
+              "emotion": "Attentive"
+            }
+          ],
+          "props": [
+            {
+              "name": "Clear umbrella",
+              "holder": "yuna",
+              "position": "Beside Yuna's schoolbag"
+            }
+          ]
+        },
+        "end_state": {
+          "characters": [
+            {
+              "character_id": "haru",
+              "position": "By the classroom window",
+              "pose": "Standing, holding her sleeve",
+              "gaze": "Toward the rain",
+              "emotion": "Hesitant"
+            },
+            {
+              "character_id": "yuna",
+              "position": "Beside the next desk",
+              "pose": "Standing beside her bag",
+              "gaze": "Toward Haru",
+              "emotion": "Attentive"
+            }
+          ],
+          "props": [
+            {
+              "name": "Clear umbrella",
+              "holder": "yuna",
+              "position": "Beside Yuna's schoolbag"
+            }
+          ]
+        },
+        "continuity": "Keep the screen direction and warm afternoon light consistent.",
+        "locked": false
+      },
+      {
+        "id": "S03",
+        "scene_id": "SC01",
+        "duration": 5.0,
+        "purpose": "A reaction before a reply",
+        "visual": "Yuna pauses beside her bag and turns toward Haru.",
+        "actions": [
+          "Yuna softens her expression and reaches for the clear umbrella."
+        ],
+        "dialogue": [
+          {
+            "speaker": "yuna",
+            "text": "We can share mine.",
+            "delivery": "Softly, with a natural pause"
+          }
+        ],
+        "camera": {
+          "size": "Medium",
+          "angle": "Eye level",
+          "movement": "Gentle push-in",
+          "transition": "Cut"
+        },
+        "start_state": {
+          "characters": [
+            {
+              "character_id": "haru",
+              "position": "By the classroom window",
+              "pose": "Standing, holding her sleeve",
+              "gaze": "Toward the rain",
+              "emotion": "Hesitant"
+            },
+            {
+              "character_id": "yuna",
+              "position": "Beside the next desk",
+              "pose": "Standing beside her bag",
+              "gaze": "Toward Haru",
+              "emotion": "Attentive"
+            }
+          ],
+          "props": [
+            {
+              "name": "Clear umbrella",
+              "holder": "yuna",
+              "position": "Beside Yuna's schoolbag"
+            }
+          ]
+        },
+        "end_state": {
+          "characters": [
+            {
+              "character_id": "haru",
+              "position": "By the classroom window",
+              "pose": "Standing, holding her sleeve",
+              "gaze": "Toward the rain",
+              "emotion": "Hesitant"
+            },
+            {
+              "character_id": "yuna",
+              "position": "Beside the next desk",
+              "pose": "Standing beside her bag",
+              "gaze": "Toward Haru",
+              "emotion": "Attentive"
+            }
+          ],
+          "props": [
+            {
+              "name": "Clear umbrella",
+              "holder": "yuna",
+              "position": "In Yuna's right hand"
+            }
+          ]
+        },
+        "continuity": "Keep the screen direction and warm afternoon light consistent.",
+        "locked": false
+      },
+      {
+        "id": "S04",
+        "scene_id": "SC01",
+        "duration": 5.0,
+        "purpose": "Offer a way forward",
+        "visual": "Yuna holds up the clear umbrella, leaving space beside her.",
+        "actions": [
+          "Yuna waits without rushing Haru; Haru lifts her gaze."
+        ],
+        "dialogue": [
+          {
+            "speaker": "yuna",
+            "text": "Want to walk together?",
+            "delivery": "Softly, with a natural pause"
+          }
+        ],
+        "camera": {
+          "size": "Two-shot",
+          "angle": "Eye level",
+          "movement": "Static",
+          "transition": "Cut"
+        },
+        "start_state": {
+          "characters": [
+            {
+              "character_id": "haru",
+              "position": "By the classroom window",
+              "pose": "Standing, holding her sleeve",
+              "gaze": "Toward the rain",
+              "emotion": "Hesitant"
+            },
+            {
+              "character_id": "yuna",
+              "position": "Beside the next desk",
+              "pose": "Standing beside her bag",
+              "gaze": "Toward Haru",
+              "emotion": "Attentive"
+            }
+          ],
+          "props": [
+            {
+              "name": "Clear umbrella",
+              "holder": "yuna",
+              "position": "In Yuna's right hand"
+            }
+          ]
+        },
+        "end_state": {
+          "characters": [
+            {
+              "character_id": "haru",
+              "position": "By the classroom window",
+              "pose": "Standing, holding her sleeve",
+              "gaze": "Toward the rain",
+              "emotion": "Hesitant"
+            },
+            {
+              "character_id": "yuna",
+              "position": "Beside the next desk",
+              "pose": "Standing beside her bag",
+              "gaze": "Toward Haru",
+              "emotion": "Attentive"
+            }
+          ],
+          "props": [
+            {
+              "name": "Clear umbrella",
+              "holder": "yuna",
+              "position": "In Yuna's right hand"
+            }
+          ]
+        },
+        "continuity": "Keep the screen direction and warm afternoon light consistent.",
+        "locked": false
+      },
+      {
+        "id": "S05",
+        "scene_id": "SC01",
+        "duration": 5.0,
+        "purpose": "Resolve the hesitation",
+        "visual": "Haru releases her sleeve. A small smile replaces her uncertainty.",
+        "actions": [
+          "Haru nods and steps toward Yuna."
+        ],
+        "dialogue": [
+          {
+            "speaker": "haru",
+            "text": "Yes. I'd like that.",
+            "delivery": "Softly, with a natural pause"
+          }
+        ],
+        "camera": {
+          "size": "Close-up",
+          "angle": "Eye level",
+          "movement": "Static",
+          "transition": "Cut"
+        },
+        "start_state": {
+          "characters": [
+            {
+              "character_id": "haru",
+              "position": "By the classroom window",
+              "pose": "Standing, holding her sleeve",
+              "gaze": "Toward the rain",
+              "emotion": "Hesitant"
+            },
+            {
+              "character_id": "yuna",
+              "position": "Beside the next desk",
+              "pose": "Standing beside her bag",
+              "gaze": "Toward Haru",
+              "emotion": "Attentive"
+            }
+          ],
+          "props": [
+            {
+              "name": "Clear umbrella",
+              "holder": "yuna",
+              "position": "In Yuna's right hand"
+            }
+          ]
+        },
+        "end_state": {
+          "characters": [
+            {
+              "character_id": "haru",
+              "position": "By the classroom window",
+              "pose": "Standing beside Yuna, hands relaxed",
+              "gaze": "Toward Yuna",
+              "emotion": "Relieved"
+            },
+            {
+              "character_id": "yuna",
+              "position": "Beside the next desk",
+              "pose": "Standing beside her bag",
+              "gaze": "Toward Haru",
+              "emotion": "Attentive"
+            }
+          ],
+          "props": [
+            {
+              "name": "Clear umbrella",
+              "holder": "yuna",
+              "position": "In Yuna's right hand"
+            }
+          ]
+        },
+        "continuity": "Keep the screen direction and warm afternoon light consistent.",
+        "locked": false
+      },
+      {
+        "id": "S06",
+        "scene_id": "SC01",
+        "duration": 5.0,
+        "purpose": "Leave together",
+        "visual": "Both girls walk toward the classroom door in the warm afternoon light.",
+        "actions": [
+          "Yuna carries the closed umbrella as they leave side by side."
+        ],
+        "dialogue": [
+          {
+            "speaker": "yuna",
+            "text": "Let's go.",
+            "delivery": "Softly, with a natural pause"
+          }
+        ],
+        "camera": {
+          "size": "Wide",
+          "angle": "Eye level",
+          "movement": "Slow follow",
+          "transition": "Cut"
+        },
+        "start_state": {
+          "characters": [
+            {
+              "character_id": "haru",
+              "position": "By the classroom window",
+              "pose": "Standing beside Yuna, hands relaxed",
+              "gaze": "Toward Yuna",
+              "emotion": "Relieved"
+            },
+            {
+              "character_id": "yuna",
+              "position": "Beside the next desk",
+              "pose": "Standing beside her bag",
+              "gaze": "Toward Haru",
+              "emotion": "Attentive"
+            }
+          ],
+          "props": [
+            {
+              "name": "Clear umbrella",
+              "holder": "yuna",
+              "position": "In Yuna's right hand"
+            }
+          ]
+        },
+        "end_state": {
+          "characters": [
+            {
+              "character_id": "haru",
+              "position": "At the classroom doorway",
+              "pose": "Walking side by side",
+              "gaze": "Toward the corridor",
+              "emotion": "Content"
+            },
+            {
+              "character_id": "yuna",
+              "position": "At the classroom doorway",
+              "pose": "Walking side by side",
+              "gaze": "Toward the corridor",
+              "emotion": "Content"
+            }
+          ],
+          "props": [
+            {
+              "name": "Clear umbrella",
+              "holder": "yuna",
+              "position": "In Yuna's right hand"
+            }
+          ]
+        },
+        "continuity": "Keep the screen direction and warm afternoon light consistent.",
+        "locked": false
+      }
+    ]
+  },
+  "provenance": {
+    "provider": "demo",
+    "model": "template",
+    "created_at": "2026-10-10T00:00:00+00:00",
+    "updated_at": "2026-10-10T00:00:00+00:00"
+  },
+  "history": [
+    {
+      "at": "2026-10-10T00:00:00+00:00",
+      "event": "Authored English documentation sample"
+    }
+  ]
+}

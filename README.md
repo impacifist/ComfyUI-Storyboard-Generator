@@ -2,6 +2,8 @@
 
 English | [한국어](README.ko.md) | [日本語](README.ja.md)
 
+[Try the interactive sample — no installation](https://impacifist.github.io/ComfyUI-Storyboard-Generator/). Explore a fixed storyboard, compare clip prompts and download connected STRING nodes. No live AI or video generation; no API key required.
+
 Create storyboards inside ComfyUI, convert them to MiniMax H3, Seedance or LTX 2.5 prompts, and connect each clip as a separate **STRING** output.
 
 This is an independent ComfyUI node pack. The standalone [AI Video Storyboard Generator](https://github.com/impacifist/ai-video-storyboard-generator) remains independent. No separate web server is required.

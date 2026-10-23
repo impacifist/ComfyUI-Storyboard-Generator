@@ -20,7 +20,7 @@ from support import document, fake_ai, service  # noqa: E402
 from playwright.sync_api import expect, sync_playwright  # noqa: E402
 
 
-def main(comfy, python):
+def main(comfy, python, demo_workflow=None):
     artifacts = ROOT / "storage/browser-check"
     artifacts.mkdir(parents=True, exist_ok=True)
     with tempfile.TemporaryDirectory(prefix="comfy-storyboard-smoke-") as temporary:
@@ -221,6 +221,27 @@ def main(comfy, python):
                             page.wait_for_timeout(250)
                         else:
                             raise AssertionError("String-only queue test did not complete")
+                        if demo_workflow:
+                            demo = json.loads(demo_workflow.read_text(encoding='utf-8'))
+                            assert all(n['type'] in ('StoryboardClipPrompt', 'PreviewAny') for n in demo['nodes'])
+                            awaitable = page.evaluate("async workflow => { await testApp.loadGraphData(workflow); return (await testApp.graphToPrompt()).output; }", demo)
+                            response = page.request.post(base + '/prompt', data={'prompt': awaitable})
+                            assert response.ok, response.text()
+                            demo_queue = response.json()['prompt_id']
+                            for _ in range(40):
+                                history = page.request.get(base + '/history/' + demo_queue).json()
+                                if demo_queue in history:
+                                    assert history[demo_queue]['status']['status_str'] == 'success', history
+                                    for node in demo['nodes']:
+                                        if node['type'] == 'StoryboardClipPrompt':
+                                            text_value = json.loads(node['widgets_values'][0])['prompt']
+                                            assert history[demo_queue]['outputs'][str(node['id'] + 1)]['text'][0] == text_value
+                                    break
+                                page.wait_for_timeout(250)
+                            else:
+                                raise AssertionError('Downloaded demo workflow did not finish')
+                            print('PASS: static-demo workflow imported into real ComfyUI; connected STRING nodes queued and returned exact saved prompts.', flush=True)
+                            page.evaluate("async () => { await testApp.loadGraphData(window.savedWorkflow); }")
                         page.evaluate("""async () => {
                           const node = testApp.graph._nodes.find(n => n.type === 'StoryboardClipPrompt');
                           await node.widgets.find(w => w.name === 'Choose clip').callback();
@@ -382,5 +403,6 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--comfy", required=True, type=Path)
     parser.add_argument("--python", required=True, type=Path)
+    parser.add_argument("--demo-workflow", type=Path)
     args = parser.parse_args()
-    main(args.comfy.resolve(), args.python.resolve())
+    main(args.comfy.resolve(), args.python.resolve(), args.demo_workflow.resolve() if args.demo_workflow else None)
