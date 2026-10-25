@@ -221,19 +221,11 @@ def review(document):
     total = sum(s["duration"] for s in story["shots"])
     if abs(total - brief["duration"]) > max(2, brief["duration"] * .1):
         add("시간", f"컷 합계 {total:.1f}초가 목표 {brief['duration']}초와 차이 납니다.")
-    previous = None
     for shot in story["shots"]:
         # A rough reading-time heuristic, not a voice synthesis measurement.
         text_length = sum(len("".join(line["text"].split())) for line in shot["dialogue"])
         if text_length / 5 + len(shot["actions"]) * .5 > shot["duration"]:
             add("시간", "대사와 행동이 컷 길이에 비해 많습니다. 낭독·동작 시간을 확인해주세요.", shot["id"])
-        if previous and previous["scene_id"] == shot["scene_id"]:
-            for group, key, label in (("characters", "character_id", "인물"), ("props", "name", "소품")):
-                before = {s[key]: s for s in previous["end_state"][group]}
-                after = {s[key]: s for s in shot["start_state"][group]}
-                if before != after:
-                    add("연속성", f"이전 컷의 종료 상태와 {label} 시작 상태가 다릅니다. 전환 의도를 확인해주세요.", shot["id"])
-        previous = shot
     visible_text = json.dumps(story["shots"], ensure_ascii=False)
     for term in filter(None, (x.strip() for x in brief["required"].splitlines())):
         if term not in visible_text:

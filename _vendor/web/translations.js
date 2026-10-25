@@ -626,7 +626,6 @@ Object.assign(window.UI_MESSAGES, {
   "예시 템플릿입니다. 실제 AI 생성 또는 페르소나 반영의 근거가 아닙니다.": ["This is a demo template, not evidence of AI generation or persona fidelity.", "デモテンプレートです。実際のAI生成やペルソナ反映の根拠にはなりません。"],
   "컷 합계 {0}초가 목표 {1}초와 차이 납니다.": ["Total duration of {0}s differs from the {1}s target.", "カットの合計{0}秒が目標の{1}秒と異なります。"],
   "대사와 행동이 컷 길이에 비해 많습니다. 낭독·동작 시간을 확인해주세요.": ["Dialogue and actions may exceed the shot duration. Check reading and movement time.", "カットの長さに対して台詞と行動が多い可能性があります。読み上げと動作の時間を確認してください。"],
-  "이전 컷의 종료 상태와 {0} 시작 상태가 다릅니다. 전환 의도를 확인해주세요.": ["The {0} start state differs from the previous shot's end state. Check the intended transition.", "{0}の開始状態が前のカットの終了状態と異なります。切り替えの意図を確認してください。"],
   "문자열 검사에서 찾지 못함: {0}. 의미상 반영 여부는 별도 검토가 필요합니다.": ["Not found by text matching: {0}. Review whether the meaning is represented.", "文字列検索で見つかりません：{0}。意味として反映されているか別途確認してください。"],
   "제외 요소 문자열이 등장합니다: {0}. 문맥을 확인해주세요.": ["Excluded text appears: {0}. Check the context.", "除外要素の文字列が含まれています：{0}。文脈を確認してください。"],
   "성격·말투·관계·지식 범위·결말은 AI 검수와 사용자 검토가 필요합니다. 형식 검증만으로 보장하지 않습니다.": ["Personality, speech, relationships, knowledge, and ending require AI review and your judgment. Structural validation cannot guarantee them.", "性格・話し方・関係・知識の範囲・結末はAIレビューとユーザーの確認が必要です。形式検証だけでは保証できません。"],
