@@ -41,7 +41,7 @@ window.I18n = (() => {
       const match = pattern.regex.exec(value);
       if (!match) continue;
       const params = Object.fromEntries(pattern.indexes.map((index, i) => [index, match[i + 1]]));
-      if (pattern.key === "{0} 항목을 입력해주세요." || pattern.key === "이전 컷의 종료 상태와 {0} 시작 상태가 다릅니다. 전환 의도를 확인해주세요.") {
+      if (pattern.key === "{0} 항목을 입력해주세요.") {
         params[0] = text(canonical(params[0]));
       }
       return text(pattern.key, params);

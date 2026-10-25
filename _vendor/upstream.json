@@ -1,6 +1,6 @@
 {
   "repository": "https://github.com/impacifist/ai-video-storyboard-generator",
-  "commit": "2851d4dec433fc1e16d9a4f36e17e0531abaae48",
+  "commit": "ccee0152195abeb020d716bae89f17509a83f786",
   "files": {
     "docs/guides/action-causality.md": "270c4d92b82fbee4bc9aacaceb2c382b65cf052b59e1dcd608328efef4bca4f4",
     "docs/guides/anime-direction.md": "63d2f588730144246d045194c80423a821020d3c01cae4348ec9559933750f22",
@@ -38,7 +38,7 @@
     "storyboard/speech.py": "7a2bdf484995fb6409e09eae06dc650895e537ca2c12840ab5c4a890174711f1",
     "web/app.js": "a65a734ca3e5ce554ba5bd4afc70f319bbc3d6048eaa48c9ff93e08cd4668e0d",
     "web/diagnostics.js": "5e6b6c872ffe793e1ebec8e40b7e0b025c02b6cbb76641d748c9ed8ae583010f",
-    "web/i18n.js": "3fcb2e88dd052b2524573e07469ff2bbe99f4bdb03ecdfa788ccaca06b5879e7",
+    "web/i18n.js": "3d9b1e0e6ebeade7276c4242171ec11865b0ef04cc2eb46387e762e0338ab4eb",
     "web/index.html": "3828202632f9e1fa76a8e52e926a5924bea470d778a0f322958082d1957c4adf",
     "web/style.css": "39287f6003cfb3c1a091d3ffd04fdebe5a0a851aa479429b0b7312786827816f",
     "web/translations.js": "44bc12024e537f1c416c8d702f3912bf69ce28a4a7b2e6ae2d1b38661479bb94"
