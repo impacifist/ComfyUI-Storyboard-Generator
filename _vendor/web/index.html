@@ -79,6 +79,7 @@
           <p id="conversion-ai-note" class="helper"></p>
           </details>
           <details id="official-guide-preview"><summary>적용할 가이드와 시스템 프롬프트</summary><h4>참고한 공식 문서</h4><ul id="official-guide-links" class="guide-sources"></ul><h4>적용 가이드</h4><pre id="official-guide-body" class="prompt-output"></pre><h4>시스템 프롬프트</h4><pre id="official-system-body" class="prompt-output"></pre></details>
+          <button id="conversion-request-open" class="secondary">LLM 전송 내용 확인·수정</button><p id="request-edit-status" class="helper" role="status"></p>
           <div class="conversion-submit">
           <p class="helper">AI 출력 검증 실패 시 최대 1회 추가 호출하여 자동 교정합니다.</p>
           <label class="check"><input id="conversion-consent" type="checkbox">선택한 AI 연결로 콘티와 가이드 본문을 전송해 변환합니다.</label>
@@ -230,6 +231,20 @@
     <div class="diagnostics-actions"><button id="diagnostics-refresh" type="button" class="secondary">새로고침</button><button id="diagnostics-copy" type="button" class="secondary">로그 복사</button><button id="diagnostics-download" type="button" class="secondary">로그 TXT 저장</button><button id="diagnostics-clear" type="button" class="quiet">완료된 로그 지우기</button></div>
     <p id="diagnostics-status" class="helper" role="status"></p>
     <div id="diagnostics-list" aria-live="polite"></div>
+  </dialog>
+  <dialog id="conversion-request" aria-labelledby="request-title">
+    <div class="section-heading"><h2 id="request-title">LLM 전송 내용 확인·수정</h2><button id="request-close" class="secondary">닫기</button></div>
+    <p class="helper">확인·수정은 AI를 호출하지 않습니다. 원본 콘티는 유지하며 이번 변환에만 적용합니다. API 키와 인증 헤더는 포함하지 않습니다.</p>
+    <div class="request-grid">
+      <section><h3>클립·컷별 행동 배정</h3><p class="helper">분할된 컷의 행동·화면 설명은 원본 전체 맥락입니다. 원본 시간 범위와 대사를 확인하고 각 구간에서 실행할 행동을 지정하세요.</p><div id="request-segments"></div></section>
+      <section><details><summary>시스템 프롬프트 편집</summary><textarea id="request-system" rows="12" aria-label="시스템 프롬프트 편집" spellcheck="false"></textarea></details>
+      <details><summary>사용자 요청 JSON 편집</summary><p class="helper">상황·결말 등의 배경 맥락과 구간별 행동·화면·카메라 설명을 수정할 수 있습니다. ID·시간·원본 대사·화자·상태·레퍼런스 연결은 보호됩니다.</p><textarea id="request-user" rows="18" aria-label="사용자 요청 JSON 편집" spellcheck="false"></textarea></details>
+      <details><summary>출력 스키마 · 읽기 전용</summary><pre id="request-schema" class="prompt-output"></pre></details>
+      <details><summary>실제 시스템 입력 · 스키마 포함</summary><pre id="request-provider-system" class="prompt-output"></pre></details>
+      <details id="request-history" hidden><summary>실제 전송 이력과 LLM 연출 응답</summary><pre id="request-history-body" class="prompt-output"></pre></details></section>
+    </div>
+    <p id="request-error" class="notice error" role="alert" hidden></p>
+    <div class="request-actions"><button id="request-reset" class="secondary">원본 요청으로 다시 불러오기</button><button id="request-download" class="secondary">요청 JSON 다운로드</button><button id="request-apply" class="primary">수정 내용 검증·적용</button></div>
   </dialog>
 </body>
 </html>

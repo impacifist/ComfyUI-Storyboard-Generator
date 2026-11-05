@@ -12,6 +12,7 @@ let dirty = false;
 let editing = null;
 const models = new Map();
 let config = null;
+let requestEdit = null, requestPreview = null, requestPayload = null, requestHistory = null;
 const settingFields = {
   OLLAMA_BASE_URL: "#settings-ollama-url", OLLAMA_MODEL: "#settings-ollama-model",
   OPENAI_MODEL: "#settings-openai-model", CLAUDE_MODEL: "#settings-claude-model",
@@ -886,6 +887,8 @@ async function loadSaved(id, forConversion) {
 }
 
 function clearConversion() {
+  requestEdit = null; requestPreview = null; requestHistory = null; requestPayload = null;
+  $("#request-edit-status").textContent = "";
   conversionBoard = null; conversionBoardId = null; conversionResult = null;
   referenceItems = [];
   visiblePlan = null; conversionEntries = [];
@@ -1006,6 +1009,15 @@ function renderConversion(result, date = "", remember = true, savedId = null) {
   heading.append(el("h3", "", tr("{0} · {1}", {0: result.target_model, 1: date ? new Date(date).toLocaleString(I18n.locale) : tr("방금 변환")})));
   const metadata = el("details", "result-metadata"); metadata.append(el("summary", "", tr("생성 정보와 가이드 출처")), el("p", "helper", tr("가이드 출처: {0}", {0: result.guide_source})));
   section.append(heading, el("p", "helper", I18n.system(result.review_note)), metadata);
+  if (result.request_trace?.length) {
+    const inspect = el("button", "secondary", tr("LLM 전송 이력·응답 보기"));
+    inspect.addEventListener("click", () => {
+      requestHistory = {request_trace: result.request_trace, director_output: result.director_output};
+      requestPreview = {...result.request_trace[0], fingerprint: ""}; renderRequestInspector();
+      $("#conversion-request").showModal();
+    });
+    metadata.append(inspect);
+  }
   if (result.validation_report?.repair_kind === "instruction_translation") metadata.append(el("p", "helper", tr("영어로 변환되지 않은 지시문 {0}개만 교정하고 다시 검증하여 저장했습니다. 원본 대사는 유지됩니다.", {0: result.validation_report.translated_fields.length})));
   else if (result.validation_report?.repaired) metadata.append(el("p", "helper", tr("출력 오류를 1회 자동 교정한 뒤 다시 검증하여 저장했습니다.")));
   if (result.validation_report?.reordered_by_id?.length) metadata.append(el("p", "helper", tr("원본 ID에 맞춰 클립·컷 순서를 복원했습니다. 내용과 대사 연결은 유지됩니다.")));
@@ -1133,7 +1145,7 @@ $("#conversion-run").addEventListener("click", () => libraryAction(async () => {
   if (!$("#conversion-consent").checked) throw new Error(tr("콘티와 가이드의 AI 전송에 동의해주세요."));
   renderPlan((await api("/api/conversion/plan", payload)).plan);
   notice(tr("선택한 AI에 콘티와 가이드를 전송해 변환하고 있습니다…"));
-  const response = await api("/api/conversion/compile", {...payload, ...selection});
+  const response = await api("/api/conversion/compile", {...payload, ...selection, ...(requestEdit ? {request_edit: requestEdit} : {})});
   conversionResult = response.result;
   renderPlan(conversionResult.plan);
   renderConversion(conversionResult, "", true, response.id);
@@ -1148,6 +1160,88 @@ for (const selector of ["#clip-limit", "#target-model", "#guide-source", "#conve
   marker.setAttribute("aria-label", tr("필수 입력"));
   input.closest("label").insertBefore(marker, input);
 }
+function requestError(error = null) {
+  $("#request-error").hidden = !error; $("#request-error").textContent = error?.message || "";
+}
+function currentRequestEdit() {
+  let user;
+  try { user = JSON.parse($("#request-user").value); }
+  catch { throw new Error(tr("사용자 요청 JSON 형식을 확인해주세요.")); }
+  return {fingerprint: requestPreview.fingerprint, system: $("#request-system").value, user};
+}
+function renderRequestInspector() {
+  requestError();
+  const readonly = !!requestHistory;
+  $("#request-system").value = requestPreview.system;
+  $("#request-user").value = JSON.stringify(requestPreview.user, null, 2);
+  for (const id of ["#request-system", "#request-user"]) $(id).readOnly = readonly;
+  $("#request-schema").textContent = JSON.stringify(requestPreview.schema, null, 2);
+  $("#request-provider-system").textContent = requestPreview.provider_system;
+  $("#request-history").hidden = !readonly;
+  $("#request-history-body").textContent = readonly ? JSON.stringify(requestHistory, null, 2) : "";
+  $("#request-apply").hidden = readonly; $("#request-reset").hidden = readonly;
+  const container = $("#request-segments"); container.replaceChildren();
+  for (const [ci, clip] of requestPreview.user.plan.clips.entries()) {
+    container.append(el("h3", "", `${clip.id} · ${clip.duration}s`));
+    for (const [si, shot] of clip.shots.entries()) {
+      const card = el("article", "library-card request-segment");
+      card.append(el("h4", "", `${shot.id} · ${shot.start}–${shot.end}s`),
+        el("p", "helper", tr("원본 시간 범위: {0}–{1}초", {0: shot.source_offset ?? 0, 1: shot.source_end ?? shot.source.duration})));
+      if (shot.action_scope === "whole_source_context") card.append(el("p", "helper", tr("분할 구간 · 행동 설명은 원본 컷 전체 맥락입니다.")));
+      readOnlyField(card, "화면", shot.source.visual);
+      readOnlyField(card, "행동", shot.source.actions.join("\n"));
+      readOnlyField(card, "대사", shot.source.dialogue.map(d => `${d.speaker}: ${d.text}`).join("\n") || "—");
+      const label = el("label", "", tr("이 구간에서 실행할 행동 · 추가 지시")), input = el("textarea");
+      input.rows = 3; input.value = shot.segment_instruction || ""; input.readOnly = readonly;
+      input.addEventListener("input", () => {
+        try {
+          const edit = currentRequestEdit(); edit.user.plan.clips[ci].shots[si].segment_instruction = input.value;
+          $("#request-user").value = JSON.stringify(edit.user, null, 2); requestError();
+        } catch (error) { requestError(error); }
+      });
+      label.append(input); card.append(label); container.append(card);
+    }
+  }
+}
+async function loadRequestInspector(reset = false) {
+  requestHistory = null;
+  $("#request-reset").hidden = false; $("#request-apply").hidden = true;
+  requestPayload = {...conversionPayload(), provider: $("#conversion-ai-provider").value, model: $("#conversion-ai-model").value.trim()};
+  requestPreview = await api("/api/conversion/request", {...requestPayload, ...(!reset && requestEdit ? {request_edit: requestEdit} : {})});
+  if (reset) { requestEdit = null; $("#request-edit-status").textContent = ""; $("#conversion-consent").checked = false; }
+  renderRequestInspector();
+}
+$("#conversion-request-open").addEventListener("click", () => libraryAction(async () => {
+  $("#conversion-request").showModal();
+  try { await loadRequestInspector(); } catch (error) { requestError(error); }
+}));
+$("#request-close").addEventListener("click", () => $("#conversion-request").close());
+$("#request-reset").addEventListener("click", () => libraryAction(async () => {
+  try { await loadRequestInspector(true); } catch (error) { requestError(error); }
+}));
+$("#request-apply").addEventListener("click", () => libraryAction(async () => {
+  try {
+    const edit = currentRequestEdit();
+    const checked = await api("/api/conversion/request", {...requestPayload, request_edit: edit});
+    requestPreview = checked;
+    requestEdit = {fingerprint: checked.fingerprint, system: checked.system, user: checked.user};
+    $("#request-edit-status").textContent = tr("검증한 사용자 수정 요청을 이번 변환에 적용합니다.");
+    $("#conversion-consent").checked = false;
+    renderRequestInspector(); $("#conversion-request").close();
+  } catch (error) { requestError(error); }
+}));
+$("#request-download").addEventListener("click", () => {
+  try { download(JSON.stringify(requestHistory || {...currentRequestEdit(), schema: requestPreview.schema}, null, 2), "llm-conversion-request.json", "application/json"); }
+  catch (error) { requestError(error); }
+});
+window.addEventListener("languagechange", () => {
+  if (!requestPreview || !$("#conversion-request").open) return;
+  if (!requestHistory) {
+    try { const current = currentRequestEdit(); requestPreview = {...requestPreview, system: current.system, user: current.user}; }
+    catch { return; } // Preserve an unfinished JSON edit verbatim.
+  }
+  renderRequestInspector();
+});
 function wrapRequiredLabels(root) {
 root.querySelectorAll("label:not(.check)").forEach((label) => {
   if (![...label.children].some((node) => node.classList.contains("required-mark"))) return;

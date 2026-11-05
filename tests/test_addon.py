@@ -270,3 +270,22 @@ class AddonTests(unittest.TestCase):
         self.assertEqual(len(service.library.conversions(self.board)), 1)
         self.assertEqual(service.library.conversions(self.board)[0]['id'], first['id'])
         self.assertEqual(service.library.load(self.board), self.document)
+
+    def test_conversion_request_inspection_edit_and_saved_trace(self):
+        payload = {**self.payload, 'provider': 'lmstudio'}
+        with patch.object(service.providers, 'generate_json') as ai:
+            preview = service.dispatch('/conversion/request', payload)
+            ai.assert_not_called()
+        edit = {key: preview[key] for key in ('fingerprint', 'system', 'user')}
+        edit['user']['plan']['clips'][0]['shots'][0]['segment_instruction'] = 'Keep the later response for its own shot.'
+        with patch.object(service.providers, 'generate_json', side_effect=fake_ai) as ai:
+            result = service.dispatch('/conversion/compile', {**payload, 'request_edit': edit})
+        self.assertEqual(ai.call_count, 1)
+        self.assertTrue(result['result']['request_edited'])
+        self.assertEqual(result['result']['request_trace'][0]['user'], json.loads(ai.call_args.args[3]))
+        self.assertIn('output', result['result']['request_trace'][0])
+        self.assertEqual(service.library.load(self.board), self.document)
+        self.assertEqual(service.library.conversions(self.board)[0]['result']['request_trace'], result['result']['request_trace'])
+        bundle = service.dispatch('/bundle/' + result['id'])
+        self.assertEqual(nodes.StoryboardClipPrompt().output_clip(clip_snapshot.encode_snapshot(bundle['clips'][0]))[0],
+                         bundle['clips'][0]['prompt'])

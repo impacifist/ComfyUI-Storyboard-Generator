@@ -1,6 +1,6 @@
 {
   "repository": "https://github.com/impacifist/ai-video-storyboard-generator",
-  "commit": "478f850be294c40b7f58c4cd2c50507612c045d1",
+  "commit": "124da47c759aa90095958ed594f268d52fd561d1",
   "files": {
     "docs/guides/action-causality.md": "270c4d92b82fbee4bc9aacaceb2c382b65cf052b59e1dcd608328efef4bca4f4",
     "docs/guides/anime-direction.md": "63d2f588730144246d045194c80423a821020d3c01cae4348ec9559933750f22",
@@ -15,6 +15,7 @@
     "docs/guides/minimax-animation-direction.md": "cb446ed6cd8616cf22be64aa32d16235019162e661b14ef16018aa3dd5dd93b7",
     "docs/guides/minimax-h3.md": "d2cec4084ae231e955984960fc009d13a823722a8ad655f44404376400a39b68",
     "docs/guides/reference-roles.md": "702b2f412efe81c36640d6ffbb7683d36b3befe84cdb2b78415b04c58ca1dc27",
+    "docs/guides/request-inspection.md": "86b81bf240bff1d1a6c72fbf6d46b6ecc66cc2caeefc15c88cd50d795552937a",
     "docs/guides/seedance-2.0.md": "427298d2e85e8c2628bd9bc059bf9ad2b6f9b37c71ff2c67238bc8a12eefd963",
     "docs/guides/storyboard-direction-research.md": "0dc9602011d13dc19300654d9f129abdf709378d045e6a5bedbd1a8657c97f0f",
     "docs/guides/storyboard-direction.md": "b5319b67f705e02bb8b93d260d43e9cae8be67e0647ed3f85d1ecf2d039af075",
@@ -23,24 +24,25 @@
     "storyboard/batch_generation.py": "7bfc924c2933cf96909e58fc7ded4c1f3a57bda28c28c4f354b4c6ad63898ceb",
     "storyboard/clip_flow.py": "3db6c434379468df5ed2b694f1fbe7ec95108b8050fe55a8e292f73e16e1cc34",
     "storyboard/clip_planning.py": "7f503378cc97429383b4cebb110fad7c4bc3efeb591d93781ea4d8ffb42f8463",
-    "storyboard/conversion.py": "b7908448c7235601c7bf52f5c0342e38c63aa219940a4055014c4d381c8d450e",
+    "storyboard/conversion.py": "cadb773d537ee3957766c8a998990d578425d3bebe61baf51cf23d2bd7a0cbef",
+    "storyboard/conversion_request.py": "1ba665da6eeb86e71b0c6f5650d9eb62fdf478ca52cf16e684196f8f58258ae9",
     "storyboard/conversion_structure.py": "fa013abad33176add587402a06dd627fd66e625ab765d3ad9a3379bcf5fb7fc3",
     "storyboard/diagnostics.py": "b72c131e869b7f7c8c28988c34384c98101bc64f71cf8e6ed4885c56a2b8ab94",
     "storyboard/dialogue.py": "4ede96f3ba8074ba9359dd7937219d2aa859d11658ea661a85b9943c4be89745",
     "storyboard/engine.py": "07447f40ddc6bbcaba0facf78b32addac99ba11ee4f77574af5e6ca4e5f48fc0",
     "storyboard/guides.py": "a4f25eaa3fab6848f3cce4a5b0f1e65ae083ef8ee8034fadccd8adc4d5a9f464",
-    "storyboard/instruction_translation.py": "89f0679b4ab9e1bc4994e0b8b3ba5a5619e98416295db0484c690e9fdf7ff4ee",
+    "storyboard/instruction_translation.py": "6910293b1e883438ff9c8a6ec233dd9f894529035473c9bd862319062a25d9e0",
     "storyboard/library.py": "ae8c3bfcd7886d1769158357fbd7ed8b2b7b2a3b44f5edd96e30818838d959bb",
     "storyboard/prompt_renderer.py": "5acbaa394665d0998462daf78678aef1809ccd4d883d2d1c977302943ff8a65d",
-    "storyboard/providers.py": "beb22510472ee7079b3a7477e1513cd71b277b5b0d5ae19a3510a0cf53a3f218",
+    "storyboard/providers.py": "71c520fad99910dc21dd0804289ec403c9a0f85e7f2c255e357b10e68c00e2bd",
     "storyboard/references.py": "ae9f2e1f7f24b6409f3e4b99edc56edd4028203a2fd2785bc7675cca7e74c484",
     "storyboard/schema.py": "8b072073c7db6661bfa9623a6d66f72cb76fe911f861ed04a71504495c2f388b",
     "storyboard/speech.py": "7a2bdf484995fb6409e09eae06dc650895e537ca2c12840ab5c4a890174711f1",
-    "web/app.js": "a65a734ca3e5ce554ba5bd4afc70f319bbc3d6048eaa48c9ff93e08cd4668e0d",
+    "web/app.js": "465300004cc552fa572f8dbdead1954d46f51c72c37b259f2caeae792948b490",
     "web/diagnostics.js": "5e6b6c872ffe793e1ebec8e40b7e0b025c02b6cbb76641d748c9ed8ae583010f",
     "web/i18n.js": "3d9b1e0e6ebeade7276c4242171ec11865b0ef04cc2eb46387e762e0338ab4eb",
-    "web/index.html": "3828202632f9e1fa76a8e52e926a5924bea470d778a0f322958082d1957c4adf",
-    "web/style.css": "39287f6003cfb3c1a091d3ffd04fdebe5a0a851aa479429b0b7312786827816f",
-    "web/translations.js": "44bc12024e537f1c416c8d702f3912bf69ce28a4a7b2e6ae2d1b38661479bb94"
+    "web/index.html": "cff9df79961eb91d753d7350f6939d8e23313a469c0e977b79ca11e5d2ae553e",
+    "web/style.css": "1ec6d744dda66c7e7eeed54eccdbeeaf5cadc126969cf7aa177c3cf536d15d22",
+    "web/translations.js": "2ed1b40e47a57f1ee9a2868684b88e1f429997279b19438169b2be9883f9d3b8"
   }
 }

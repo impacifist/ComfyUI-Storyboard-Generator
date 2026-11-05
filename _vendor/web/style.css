@@ -280,3 +280,13 @@ main[data-studio="convert"] { max-width: none; }
   .library-row-actions .quiet,.library-row-actions .secondary { font-size: 11px; padding: 7px; }
   .library-symbol { width: 30px; height: 36px; }
 }
+#conversion-request {width:min(1440px,96vw);max-width:none;max-height:94dvh;overflow:auto;background:var(--paper);color:var(--ink);border:1px solid var(--line);padding:24px;border-radius:12px}
+#conversion-request .request-grid {display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:24px;max-height:65dvh;overflow:auto;padding-right:8px}
+#conversion-request .request-grid>section {min-width:0}
+#conversion-request .request-grid>section:last-child {position:sticky;top:0;align-self:start;max-height:65dvh;overflow:auto}
+#conversion-request .request-grid details {margin:12px 0;padding:12px;border:1px solid var(--line);border-radius:8px}
+#conversion-request textarea {width:100%;max-width:100%;box-sizing:border-box;resize:vertical;font:12px/1.7 ui-monospace,monospace}
+#conversion-request .prompt-output {max-height:280px;overflow:auto;white-space:pre-wrap;overflow-wrap:anywhere}
+#conversion-request .request-actions {display:flex;justify-content:flex-end;flex-wrap:wrap;gap:10px;padding-top:18px}
+#conversion-request .request-segment {margin-bottom:12px;overflow-wrap:anywhere}
+@media(max-width:900px) {#conversion-request .request-grid {grid-template-columns:minmax(0,1fr)}#conversion-request .request-grid>section:last-child {position:static;max-height:none}#conversion-request {padding:16px}}

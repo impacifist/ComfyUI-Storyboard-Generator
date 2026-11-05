@@ -349,6 +349,10 @@ def generate_json(provider, model, system, user, schema):
     return result
 
 
+def format_instruction(system, schema):
+    return system + "\n다음 JSON Schema에 맞는 JSON 객체만 반환하세요:\n" + json.dumps(schema, ensure_ascii=False)
+
+
 def _generate_json(provider, model, system, user, schema, trace):
     if provider not in ("ollama", "openai", "claude", "lmstudio"):
         raise ValidationError("지원하지 않는 AI 제공자입니다.")
@@ -362,8 +366,7 @@ def _generate_json(provider, model, system, user, schema, trace):
             limit_key = "OPENAI_LOCAL_MAX_TOKENS"
     output_limit = local_output_limit(settings.get(limit_key, "16000")) if limit_key else 16000
     trace.configure(model, [settings.get(key) for key in KEY_FIELDS], output_limit)
-    schema_text = json.dumps(schema, ensure_ascii=False)
-    instruction = system + "\n다음 JSON Schema에 맞는 JSON 객체만 반환하세요:\n" + schema_text
+    instruction = format_instruction(system, schema)
     if provider == "ollama":
         base = settings.get("OLLAMA_BASE_URL", "http://127.0.0.1:11434").rstrip("/")
         base = ollama_url(base)

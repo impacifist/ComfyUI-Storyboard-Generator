@@ -6,7 +6,7 @@ import json
 import re
 from decimal import Decimal, ROUND_CEILING
 
-from . import (clip_flow, clip_planning, conversion_structure, guides, instruction_translation,
+from . import (clip_flow, clip_planning, conversion_request, conversion_structure, guides, instruction_translation,
                prompt_renderer, providers, references, speech)
 from .engine import validate_document
 from .schema import ValidationError
@@ -14,7 +14,7 @@ from .schema import ValidationError
 OUTPUT = prompt_renderer.DIRECTOR_OUTPUT
 
 
-def compile_directions(document, layout, profile, assets, provider, model, system, request):
+def compile_directions(document, layout, profile, assets, provider, model, system, request, trace=None):
     """One initial generation and at most one repair of completed invalid JSON data.
 
     Transport, refusal, truncation and setup failures are never retried. No invalid
@@ -23,7 +23,7 @@ def compile_directions(document, layout, profile, assets, provider, model, syste
     schema = prompt_renderer.output_schema(document, layout)
     errors, warnings = [], []
     request = {**request, "shot_contract": conversion_structure.contract(layout)}
-    system += "\nSHOT IDENTITY CONTRACT: " + conversion_structure.RULES
+    system = conversion_request.effective_system(system)
     user = request
     translation_source = None
     translation_reordered = []
@@ -31,11 +31,15 @@ def compile_directions(document, layout, profile, assets, provider, model, syste
         draft = None
         translated_fields = []
         language_failure = False
+        call_record = None
         try:
             if translation_source is not None:
-                draft, translated_fields = instruction_translation.repair(translation_source, provider, model)
+                draft, translated_fields = instruction_translation.repair(translation_source, provider, model, trace=trace)
             else:
+                call_record = conversion_request.record(trace, 'initial' if not attempt else 'full_repair', system, user, schema)
                 draft = providers.generate_json(provider, model, system, json.dumps(user, ensure_ascii=False), schema)
+                if call_record is not None:
+                    call_record['output'] = copy.deepcopy(draft)
             # Also validate here so alternate adapters cannot bypass the contract.
             prompt_renderer.validate(draft, schema, "AI 응답")
             draft, reordered = conversion_structure.align(layout, draft)
@@ -54,6 +58,8 @@ def compile_directions(document, layout, profile, assets, provider, model, syste
             return draft, result, manifest, report
         except providers.OutputValidationError as error:
             draft = error.output
+            if call_record is not None:
+                call_record['output'] = copy.deepcopy(draft)
             message = str(error)
         except ValidationError as error:
             if draft is None and translation_source is None:
@@ -194,10 +200,15 @@ def preflight(document, payload):
                 clip["content_duration"] = content_duration
                 layout["notes"].append(f"{clip['id']}: 원본 구간 {content_duration:g}초 → 생성 클립 {clip['duration']}초. "
                                        "남는 시간은 마지막 화면 유지에 사용하며 원본 컷·대사 시간은 유지합니다.")
+    for clip in layout['clips']:
+        for segment in clip['shots']:
+            segment['segment_instruction'] = ''
+            segment['action_scope'] = ('whole_source_context' if segment.get('continues_from_previous') or
+                                       segment.get('continues_in_next') else 'whole_shot')
     return clip_flow.annotate(document, layout), selected_guide, assets
 
 
-def compile_prompts(document, payload):
+def prepare_request(document, payload):
     layout, selected_guide, assets = preflight(document, payload)
     if selected_guide:
         payload = {**payload, **{k: selected_guide[k] for k in ("target_model", "guide_source", "guide")}}
@@ -270,8 +281,31 @@ def compile_prompts(document, payload):
                "character_bindings": speech.bindings(document, prompt_renderer.render_labels(document), assets),
                "reference_targets": references.target_bindings(assets, len(document["brief"]["characters"])),
                "boundary_contract": boundary_contract, "mode": selected_guide["mode"] if selected_guide else "custom"}
+    request['shot_contract'] = conversion_structure.contract(layout)
+    schema = prompt_renderer.output_schema(document, layout)
+    system_prompt, request, request_hash = conversion_request.apply_edit(
+        system_prompt, request, schema, provider, model, payload.get('request_edit'))
+    layout = copy.deepcopy(request['plan'])
+    return {'layout': layout, 'profile': selected_guide, 'assets': assets, 'fields': fields,
+            'scope': scope, 'system': system_prompt, 'user': request, 'schema': schema, 'fingerprint': request_hash}
+
+
+def preview_request(document, payload):
+    # No settings/credentials are read and no provider is called.
+    prepared = prepare_request(document, payload)
+    return {key: prepared[key] for key in ('system', 'user', 'schema', 'fingerprint')} | {
+        'provider_system': providers.format_instruction(prepared['system'], prepared['schema'])}
+
+
+def compile_prompts(document, payload):
+    prepared = prepare_request(document, payload)
+    layout, selected_guide, assets = prepared['layout'], prepared['profile'], prepared['assets']
+    fields, scope = prepared['fields'], prepared['scope']
+    system_prompt, request = prepared['system'], prepared['user']
+    provider, model = payload['provider'], payload['model']
+    request_trace = []
     draft, result, dialogue_manifest, validation_report = compile_directions(
-        document, layout, selected_guide, assets, provider, model, system_prompt, request)
+        document, layout, selected_guide, assets, provider, model, system_prompt, request, trace=request_trace)
     if [c["id"] for c in result["clips"]] != [c["id"] for c in layout["clips"]]:
         raise ValidationError("변환 결과의 클립 수 또는 순서가 원본 계획과 다릅니다.")
     for generated, clip in zip(result["clips"], layout["clips"]):
@@ -297,7 +331,9 @@ def compile_prompts(document, payload):
             "references": assets, "guide_id": selected_guide["id"] if selected_guide else "custom",
             "guide_sha256": selected_guide["sha256"] if selected_guide else None,
             "guide_checked_at": selected_guide["checked_at"] if selected_guide else None,
-            "system_prompt": system_prompt + "\nSHOT IDENTITY CONTRACT: " + conversion_structure.RULES, "scope": scope,
+            "system_prompt": system_prompt, "scope": scope,
+            "request_trace": request_trace, "director_output": draft,
+            "request_edited": payload.get('request_edit') is not None,
             "assembly_version": 8, "output_language": "english_except_dialogue", "dialogue_manifest": dialogue_manifest,
             "english_reference_notes": draft["reference_notes"],
             "render_labels": prompt_renderer.render_labels(document),

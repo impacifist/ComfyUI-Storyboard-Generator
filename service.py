@@ -110,6 +110,8 @@ def operation(path, payload):
             return {"references": references.save(payload.get("id"), payload.get("references"))}
         if path == "/conversion/plan":
             return {"plan": conversion.preflight(library.load(payload.get("id")), payload)[0]}
+        if path == "/conversion/request":
+            return conversion.preview_request(library.load(payload.get("id")), payload)
         if path == "/conversion/compile":
             result = conversion.compile_prompts(library.load(payload.get("id")), payload)
             saved_id = library.save_conversion(payload.get("id"), result)

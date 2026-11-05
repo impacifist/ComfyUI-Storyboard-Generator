@@ -3,7 +3,7 @@
 import copy
 import json
 
-from . import prompt_renderer, providers
+from . import conversion_request, prompt_renderer, providers
 from .schema import TEXT, ValidationError, obj, validate
 
 SYSTEM = (
@@ -75,7 +75,7 @@ def invalid_fields(draft):
     return found
 
 
-def repair(draft, provider, model):
+def repair(draft, provider, model, trace=None):
     """One small provider call; apply atomically after validating every translation."""
     targets = invalid_fields(draft)
     if not targets or len(targets) > 100:
@@ -85,7 +85,10 @@ def repair(draft, provider, model):
     request = {'instruction_translations': [{'key': key, 'path': label(draft, path), 'text': value}
                                            for key, (path, value) in slots.items()]}
     try:
+        call_record = conversion_request.record(trace, 'instruction_translation', SYSTEM, request, schema)
         response = providers.generate_json(provider, model, SYSTEM, json.dumps(request, ensure_ascii=False), schema)
+        if call_record is not None:
+            call_record['output'] = copy.deepcopy(response)
         validate(response, schema, 'instruction_translations')
     except (providers.OutputValidationError, ValidationError) as error:
         # Do not treat a translation-only response as a complete director draft.
