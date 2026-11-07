@@ -6,7 +6,7 @@ import json
 import re
 from decimal import Decimal, ROUND_CEILING
 
-from . import (clip_flow, clip_planning, conversion_request, conversion_structure, guides, instruction_translation,
+from . import (clip_flow, clip_planning, conversion_request, conversion_structure, guides, handoff, instruction_translation,
                prompt_renderer, providers, references, speech)
 from .engine import validate_document
 from .schema import ValidationError
@@ -88,6 +88,8 @@ def compile_directions(document, layout, profile, assets, provider, model, syste
         user = {**request, "repair": {"validation_errors": [message], "previous_output": draft,
                 "instruction": "Repair the invalid direction JSON using the original plan and exact IDs. "
                 "Return the COMPLETE corrected object. Keep every source constraint and real warning. "
+                "Do not return handoffs, bridge or sound_bridge fields. The application owns connection "
+                "scope; never place a future action in the current clip's closing or audio direction. "
                 "Follow shot_contract exactly: retain global source shot IDs within each assigned clip; "
                 "never restart numbering per clip or drop repeated source IDs across continuation clips. "
                 "Do not remove characters or props to evade validation. Correct both adjoining shot directions "
@@ -334,11 +336,11 @@ def compile_prompts(document, payload):
             "system_prompt": system_prompt, "scope": scope,
             "request_trace": request_trace, "director_output": draft,
             "request_edited": payload.get('request_edit') is not None,
-            "assembly_version": 8, "output_language": "english_except_dialogue", "dialogue_manifest": dialogue_manifest,
+            "assembly_version": 9, "output_language": "english_except_dialogue", "dialogue_manifest": dialogue_manifest,
             "english_reference_notes": draft["reference_notes"],
             "render_labels": prompt_renderer.render_labels(document),
             "validation_report": validation_report,
             "boundary_states": draft["boundaries"],
-            "handoff_bridges": draft["handoffs"],
+            "handoff_bridges": [], "handoff_policy": handoff.manifest(layout, prose=bool(selected_guide and selected_guide['id'].startswith('ltx'))),
             "status": "needs_review",
             "review_note": "길이·클립 순서·대사 보존을 검사했습니다. 의미와 가이드 전체 준수 여부는 사용자 검토가 필요합니다."}

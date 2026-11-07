@@ -1012,7 +1012,7 @@ function renderConversion(result, date = "", remember = true, savedId = null) {
   if (result.request_trace?.length) {
     const inspect = el("button", "secondary", tr("LLM 전송 이력·응답 보기"));
     inspect.addEventListener("click", () => {
-      requestHistory = {request_trace: result.request_trace, director_output: result.director_output};
+      requestHistory = {request_trace: result.request_trace, director_output: result.director_output, handoff_policy: result.handoff_policy || []};
       requestPreview = {...result.request_trace[0], fingerprint: ""}; renderRequestInspector();
       $("#conversion-request").showModal();
     });

@@ -4,7 +4,7 @@ import copy
 import hashlib
 import json
 
-from . import conversion_structure, providers
+from . import conversion_structure, handoff, providers
 from .schema import TEXT, ValidationError, array, validate
 
 ACTION_RULES = (
@@ -17,7 +17,7 @@ ACTION_RULES = (
     "source visual/actions/camera are approved specifically for this segment. Preserve assigned original "
     "speech and speakers; do not invent timing certainty where source actions have no timestamps."
 )
-SUFFIX = '\nSHOT IDENTITY CONTRACT: ' + conversion_structure.RULES + '\n' + ACTION_RULES
+SUFFIX = '\nSHOT IDENTITY CONTRACT: ' + conversion_structure.RULES + '\n' + ACTION_RULES + '\n' + handoff.POLICY
 
 
 def effective_system(system):

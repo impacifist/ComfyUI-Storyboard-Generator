@@ -12,6 +12,24 @@ from storyboard_addon import clip_snapshot, nodes
 
 
 class AddonTests(unittest.TestCase):
+    def test_directional_connections_preserve_portable_saved_prompts(self):
+        result = self.compile()['result']
+        self.assertEqual(result['assembly_version'], 9)
+        self.assertEqual(result['handoff_bridges'], [])
+        self.assertTrue(result['handoff_policy'])
+        for item in result['handoff_policy']:
+            self.assertNotEqual(item['incoming'], item['outgoing'])
+        for clip in result['output']['clips']:
+            self.assertNotIn('Outgoing connection', clip['prompt'])
+            self.assertNotIn('Audio connection:', clip['prompt'])
+        conversion_id = service.library.conversions(self.board)[0]['id']
+        bundle = service.dispatch('/bundle/' + conversion_id)
+        old = copy.deepcopy(bundle['clips'][0])
+        old['prompt'] = 'Previously approved saved prompt. Outgoing connection H01: old direction.'
+        old['revision'] = clip_snapshot.digest(old)
+        # An existing signed STRING node is not silently rewritten by a compiler update.
+        self.assertEqual(nodes.StoryboardClipPrompt().output_clip(clip_snapshot.encode_snapshot(old))[0], old['prompt'])
+
     def setUp(self):
         self.temporary = tempfile.TemporaryDirectory()
         self.addCleanup(self.temporary.cleanup)

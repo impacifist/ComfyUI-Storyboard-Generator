@@ -43,8 +43,6 @@ def fields(draft):
             add(character, ('position', 'pose', 'gaze', 'emotion'), ('boundaries', bi, 'state', 'characters', i))
         for i, prop in enumerate(boundary['state']['props']):
             add(prop, ('english_name', 'position'), ('boundaries', bi, 'state', 'props', i))
-    for i, handoff in enumerate(draft['handoffs']):
-        add(handoff, ('bridge', 'sound_bridge'), ('handoffs', i))
     for i, reference in enumerate(draft['reference_notes']):
         add(reference, ('note', 'target_name'), ('reference_notes', i))
     for i, note in enumerate(draft['notes']):

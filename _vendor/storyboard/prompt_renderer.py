@@ -5,7 +5,7 @@ import re
 import unicodedata
 
 from .references import ROLE_GUIDANCE
-from . import conversion_structure, references, speech
+from . import conversion_structure, handoff, references, speech
 from .schema import CHAR_STATE, NUMBER, TEXT, ValidationError, array, obj, validate
 
 DIRECTION_STATE = obj(characters=array(CHAR_STATE),
@@ -17,7 +17,6 @@ DIRECTOR_OUTPUT = obj(clips=array(obj(
                     camera=obj(size=TEXT, angle=TEXT, movement=TEXT, transition=TEXT, layout=TEXT),
                     dialogue_language=TEXT, deliveries=array(TEXT))),
     overall_soundscape=TEXT, non_diegetic_music=TEXT)), boundaries=array(obj(id=TEXT, state=DIRECTION_STATE)),
-    handoffs=array(obj(id=TEXT, bridge=TEXT, sound_bridge=TEXT)),
     reference_notes=array(obj(label=TEXT, note=TEXT, target_name=TEXT)),
     warnings=array(TEXT), notes=array(TEXT))
 
@@ -66,7 +65,6 @@ def output_schema(document, layout):
     boundary = schema["properties"]["boundaries"]["items"]["properties"]
     ids = [c["id"] for c in document["brief"]["characters"]]
     boundary["id"]["enum"] = [b["id"] for b in layout.get("boundaries", [])] or ["unused"]
-    schema["properties"]["handoffs"]["items"]["properties"]["id"]["enum"] = [h["id"] for h in layout.get("handoffs", [])] or ["unused"]
     state = boundary["state"]["properties"]
     character = state["characters"]["items"]["properties"]
     character["character_id"]["enum"] = ids
@@ -182,7 +180,6 @@ def ltx_prompt(generated, clip, layout, draft, names, cameras):
     labels = speech.prose_labels(names)
     prose_mapping = {names[key]: label for key, label in labels.items()}
     boundaries = {item["id"]: item["state"] for item in draft["boundaries"]}
-    bridges = {item["id"]: item for item in draft["handoffs"]}
 
     def state_text(key):
         state = boundaries[key]
@@ -200,8 +197,7 @@ def ltx_prompt(generated, clip, layout, draft, names, cameras):
     incoming = next((h for h in layout.get("handoffs", []) if h["to_clip"] == clip["id"]), None)
     outgoing = next((h for h in layout.get("handoffs", []) if h["from_clip"] == clip["id"]), None)
     if incoming:
-        bridge = bridges[incoming["id"]]
-        parts.extend([sentence(bridge["bridge"]), sentence(bridge["sound_bridge"])])
+        parts.append(handoff.note(incoming, 'incoming', prose=True))
     for index, (directed, planned) in enumerate(zip(generated["shots"], clip["shots"])):
         camera = cameras[planned["id"]]
         if index:
@@ -235,10 +231,9 @@ def ltx_prompt(generated, clip, layout, draft, names, cameras):
         parts.append(f"After the approved action, hold the final frame for "
                      f"{clip['duration'] - clip['content_duration']:g} seconds without new speech or action.")
     if outgoing:
-        bridge = bridges[outgoing["id"]]
-        parts.extend([sentence(bridge["bridge"]), sentence(bridge["sound_bridge"])])
-        if outgoing["kind"] != "scene_change":
-            parts.append("The ongoing performance carries forward without an added pause, fade or camera reset.")
+        if outgoing['kind'] != 'continuous_shot':
+            parts.append('The view transitions as approved: ' + sentence(cameras[clip['shots'][-1]['id']]['transition']))
+        parts.append(handoff.note(outgoing, 'outgoing', prose=True))
     elif not clip["shots"][-1].get("continues_in_next"):
         parts.append("The final view concludes as follows: " + sentence(cameras[clip["shots"][-1]["id"]]["transition"]))
     for label, key in (("The ambient sound is", "overall_soundscape"), ("The non-diegetic music is", "non_diegetic_music")):
@@ -260,14 +255,6 @@ def assemble(document, layout, draft, profile, assets):
     target_by_id = {item["target_id"]: item for item in reference_targets}
     if profile and profile["id"] == "minimax-h3-reference":
         draft = speech.reference_prose(draft, identities + [g for g in reference_targets if g["subject"]])
-    if [h["id"] for h in draft["handoffs"]] != [h["id"] for h in layout.get("handoffs", [])]:
-        raise ValidationError("handoffs: return every planned handoff once, in plan order")
-    for handoff in draft["handoffs"]:
-        for field in ("bridge", "sound_bridge"):
-            require_english(handoff[field], f"handoffs.{handoff['id']}.{field}")
-            if not handoff[field].strip() or re.search(r"</?d>|\(S\d+\)|\{[^{}]*\}", handoff[field]):
-                raise ValidationError("handoffs: nonempty English connection notes without dialogue syntax required")
-    bridges = {h["id"]: h for h in draft["handoffs"]}
     if [r["label"] for r in draft["reference_notes"]] != [a["label"] for a in assets]:
         raise ValidationError("reference_notes: return every reference label once, in manifest order")
     for index, reference in enumerate(draft["reference_notes"]):
@@ -317,7 +304,6 @@ def assemble(document, layout, draft, profile, assets):
                                                 "overall_soundscape", "non_diegetic_music")]
         fragments += [s["direction"] for s in generated["shots"]]
         fragments += [value for s in generated["shots"] for value in s["camera"].values()]
-        fragments += [value for h in draft["handoffs"] for value in (h["bridge"], h["sound_bridge"])]
         for field in ("context", "subject_definitions", "summary", "retention_analysis", "overall_soundscape", "non_diegetic_music"):
             require_english(generated[field], f"clips.{clip['id']}.{field}")
         for index, directed in enumerate(generated["shots"]):
@@ -349,13 +335,7 @@ def assemble(document, layout, draft, profile, assets):
         incoming = next((h for h in layout.get("handoffs", []) if h["to_clip"] == clip["id"]), None)
         outgoing = next((h for h in layout.get("handoffs", []) if h["from_clip"] == clip["id"]), None)
         if incoming:
-            bridge = bridges[incoming["id"]]
-            bodies.append(f"Incoming connection {incoming['id']} ({incoming['kind']}): {bridge['bridge']}\n"
-                          f"Audio connection: {bridge['sound_bridge']}")
-            if incoming["kind"] != "scene_change":
-                bodies.append("The scene is already underway. Continue its conversational rhythm; do not restart "
-                              "the setup or force speech to begin simply because this clip starts. "
-                              "Let each assigned line follow its stated action or response cue.")
+            bodies.append(f"Clip start scope {incoming['id']} ({incoming['kind']}): " + handoff.note(incoming, 'incoming'))
         for index, (directed, planned) in enumerate(zip(generated["shots"], clip["shots"]), 1):
             if (len(directed["deliveries"]) != len(planned["source"]["dialogue"])
                     or len(directed["speech_cues"]) != len(planned["source"]["dialogue"])):
@@ -425,13 +405,7 @@ def assemble(document, layout, draft, profile, assets):
                 body.append(ending + camera["transition"])
             bodies.append("\n".join(body))
         if outgoing:
-            bridge = bridges[outgoing["id"]]
-            bodies.append(f"Outgoing connection {outgoing['id']} ({outgoing['kind']}): {bridge['bridge']}\n"
-                          f"Audio connection: {bridge['sound_bridge']}")
-            if outgoing["kind"] != "scene_change":
-                bodies.append("This is an intermediate generation segment, not a scene ending. "
-                              "Carry the approved performance into the next segment without an added fade, "
-                              "settling pose or silent countdown. Keep intentional pauses only where the story calls for them.")
+            bodies.append(f"Clip end scope {outgoing['id']} ({outgoing['kind']}): " + handoff.note(outgoing, 'outgoing'))
         description = "\n\n".join(bodies)
         refs = []
         for item, translated in zip(assets, draft["reference_notes"]):

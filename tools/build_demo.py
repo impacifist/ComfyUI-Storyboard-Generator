@@ -26,7 +26,7 @@ def authored_directions(layout, english):
             'Haru has short dark hair and a navy uniform; Yuna has long dark hair and a navy uniform. '
             'Keep Haru near the window and Yuna beside the adjacent desk until they leave together.',
         'subject_definitions': 'Haru [haru] is reserved and thoughtful. Yuna [yuna] is observant and considerate.',
-        'summary': 'Haru hesitates; Yuna offers to share her umbrella and walk home together.',
+        'summary': ' / '.join(source[s['id']]['purpose'] for s in c['shots']),
         'retention_analysis': 'Maintain the approved identities, uniforms, classroom layout and clear umbrella.',
         'shots': [{'id': s['id'], 'direction': source[s['id']]['visual'] + ' ' + ' '.join(source[s['id']]['actions']),
             'pacing_weight': 1, 'camera': {**source[s['id']]['camera'],
@@ -40,10 +40,7 @@ def authored_directions(layout, english):
                 for d in s['source']['dialogue']]} for s in c['shots']],
         'overall_soundscape': 'Soft rain against the classroom window and quiet footsteps.',
         'non_diegetic_music': 'N/A'} for c in layout['clips']],
-        'boundaries': [], 'handoffs': [{'id': h['id'],
-            'bridge': 'Continue the established classroom conversation without replaying its opening.',
-            'sound_bridge': 'Carry the same soft rain ambience across the connection.'}
-            for h in layout.get('handoffs', [])], 'reference_notes': [], 'warnings': [], 'notes': []}
+        'boundaries': [], 'reference_notes': [], 'warnings': [], 'notes': []}
 
 
 def build(destination):
