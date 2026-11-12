@@ -8,7 +8,7 @@ from pathlib import Path
 from unittest.mock import patch
 
 from support import ROOT, direction_output, document, fake_ai, service
-from storyboard_addon import clip_snapshot, nodes
+from storyboard_addon import clip_snapshot, nodes, state_repair
 
 
 class AddonTests(unittest.TestCase):
@@ -182,6 +182,51 @@ class AddonTests(unittest.TestCase):
             with self.assertRaises(service.providers.ProviderError):
                 service.dispatch("/conversion/compile", self.payload)
         self.assertEqual(service.library.conversions(self.board), [])
+
+    def five_character_brief(self):
+        brief = copy.deepcopy(self.document["brief"])
+        template = brief["characters"][0]
+        while len(brief["characters"]) < 5:
+            index = len(brief["characters"]) + 1
+            character = copy.deepcopy(template)
+            character["id"] = f"extra_{index}"
+            character["name"] = f"Extra {index}"
+            brief["characters"].append(character)
+        return brief
+
+    def test_generation_completes_missing_off_screen_states_for_large_cast(self):
+        brief = self.five_character_brief()
+        story = service.engine.demo_story(brief)
+        missing = brief["characters"][-1]["id"]
+        story["shots"][2]["start_state"]["characters"] = [
+            state for state in story["shots"][2]["start_state"]["characters"]
+            if state["character_id"] != missing]
+        story["shots"][2]["end_state"]["characters"] = [
+            state for state in story["shots"][2]["end_state"]["characters"]
+            if state["character_id"] != missing]
+
+        with patch.object(service.providers, "generate_json", return_value=story):
+            result = service.dispatch("/generate", {"brief": brief, "provider": "openai", "model": "mock"})
+
+        repaired = result["document"]["story"]["shots"][2]
+        expected = {character["id"] for character in brief["characters"]}
+        for key in ("start_state", "end_state"):
+            states = repaired[key]["characters"]
+            self.assertEqual(len(states), 5)
+            self.assertEqual({state["character_id"] for state in states}, expected)
+            self.assertTrue(all(all(value.strip() for value in state.values()) for state in states))
+        self.assertTrue(any(assumption.startswith(state_repair.NOTE_PREFIX)
+                            for assumption in result["document"]["story"]["assumptions"]))
+
+    def test_direct_store_validation_still_rejects_missing_states(self):
+        brief = self.five_character_brief()
+        saved = service.engine.generate({"brief": brief, "provider": "demo"})
+        missing = brief["characters"][-1]["id"]
+        saved["story"]["shots"][2]["start_state"]["characters"] = [
+            state for state in saved["story"]["shots"][2]["start_state"]["characters"]
+            if state["character_id"] != missing]
+        with self.assertRaisesRegex(service.ValidationError, "S03.start_state"):
+            service.dispatch("/validate", {"document": saved})
 
     def test_vendor_files_match_pinned_revision(self):
         manifest = json.loads((ROOT / "_vendor/upstream.json").read_text(encoding="utf-8"))

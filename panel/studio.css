@@ -157,4 +157,19 @@ body.comfy-workbench { font: 13px/1.55 "Segoe UI", "Malgun Gothic", system-ui, s
   .comfy-workbench .workbench-action-group > .check { flex-basis: 100%; max-width: none; }
   .comfy-workbench .workbench-dock :is(.primary, .secondary) { padding: 8px 12px; font-size: 12px; }
 }
+.comfy-workbench .sg-direction-field > .sg-field-caption { display: block; font-weight: 600; }
+.comfy-workbench .sg-direction-field textarea { min-height: 130px; }
+.comfy-workbench .sg-direction-help { margin-top: -6px; }
+.comfy-workbench .sg-shot-notes-box { border-top: 1px solid var(--line); padding: 12px 0; margin: 0; }
+.comfy-workbench .sg-shot-notes-box > summary { cursor: pointer; font-size: 12px; font-weight: 600; color: #c5cad4; padding: 3px 0; }
+.comfy-workbench .sg-shot-notes-box > .helper { margin: 6px 0 8px; }
+.comfy-workbench .sg-shot-notes-clear { margin: 0 0 8px; padding-left: 0; }
+.comfy-workbench .sg-shot-notes-status { margin: 0 0 8px; }
+.comfy-workbench .sg-shot-notes-list { display: grid; gap: 8px; max-height: 320px; overflow: auto; padding-right: 4px; scrollbar-width: thin; scrollbar-color: #454d5c transparent; }
+.comfy-workbench .sg-shot-note { flex-direction: row; align-items: flex-start; gap: 8px; margin: 0; }
+.comfy-workbench .sg-shot-note-id { flex: 0 0 34px; padding-top: 9px; font: 700 11px/1 Consolas, monospace; color: var(--accent); }
+.comfy-workbench .sg-shot-note textarea { min-height: 44px; resize: vertical; }
+@media(max-width:600px) {
+  .comfy-workbench .sg-shot-notes-list { max-height: 260px; }
+}
 @media(prefers-reduced-motion:reduce) { .comfy-workbench * { scroll-behavior: auto !important; transition: none !important; } }

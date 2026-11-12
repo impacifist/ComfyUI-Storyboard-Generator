@@ -96,15 +96,15 @@ async def studio_route(request):
     asset = request.match_info.get("asset", "") or "index.html"
     files = {"index.html": "text/html", "app.js": "text/javascript", "i18n.js": "text/javascript",
              "translations.js": "text/javascript", "style.css": "text/css", "bridge.js": "text/javascript", "diagnostics.js": "text/javascript",
-             "workbench.js": "text/javascript", "studio.css": "text/css"}
+             "workbench.js": "text/javascript", "direction.js": "text/javascript", "studio.css": "text/css"}
     if asset not in files:
         return response({"error": "Not found."}, 404)
-    path = ROOT / "panel" / asset if asset in ("bridge.js", "workbench.js", "studio.css") else service.VENDOR / "web" / asset
+    path = ROOT / "panel" / asset if asset in ("bridge.js", "workbench.js", "direction.js", "studio.css") else service.VENDOR / "web" / asset
     text = path.read_text(encoding="utf-8")
     if asset == "index.html":
         for name in ("style.css", "translations.js", "i18n.js", "app.js", "diagnostics.js"):
             text = text.replace('"/' + name + '"', '"' + PREFIX + '/studio/' + name + '"')
-        text = text.replace("</head>", f'<link rel="stylesheet" href="{PREFIX}/studio/studio.css"><script src="{PREFIX}/studio/bridge.js" defer></script><script src="{PREFIX}/studio/workbench.js" defer></script></head>')
+        text = text.replace("</head>", f'<link rel="stylesheet" href="{PREFIX}/studio/studio.css"><script src="{PREFIX}/studio/bridge.js" defer></script><script src="{PREFIX}/studio/workbench.js" defer></script><script src="{PREFIX}/studio/direction.js" defer></script></head>')
         text = text.replace("<title>Persona Storyboard</title>", "<title>Storyboard Studio</title>")
     if asset in ("app.js", "diagnostics.js"):
         text = text.replace("/api/", PREFIX + "/api/")

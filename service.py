@@ -4,10 +4,13 @@ import json
 import threading
 from pathlib import Path
 
+from . import state_repair
 from ._vendor.storyboard import conversion, diagnostics, engine, guides, library, providers, references
 from ._vendor.storyboard.schema import ValidationError, validate_brief
 from .clip_snapshot import make_bundle
 from .ollama_memory import unload_model
+
+state_repair.install()
 
 VENDOR = Path(__file__).resolve().parent / "_vendor"
 BUSY = threading.Lock()
@@ -81,7 +84,11 @@ def operation(path, payload):
         if path == "/settings":
             return providers.save_settings(payload)
         if path == "/generate":
-            return engine.generate_response(payload)
+            token = state_repair.ACTIVE.set(True)
+            try:
+                return engine.generate_response(payload)
+            finally:
+                state_repair.ACTIVE.reset(token)
         if path == "/generation/accept":
             return engine.accept_generation(payload)
         if path == "/validate":

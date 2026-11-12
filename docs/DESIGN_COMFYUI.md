@@ -26,4 +26,6 @@ The design is applied by `panel/studio.css`, `panel/workbench.js` and the ComfyU
 
 The first layout review removed the standalone navigation/branding from the embedded Studio to avoid two conflicting tab bars. Decorative empty-state art is hidden. Model selection stays visible; source shots, references and Ollama lifecycle controls remain available behind disclosures. Parent navigation tracks the actual inner Studio view and is disabled during active Studio operations to avoid mismatched state.
 
+The story direction tab keeps a single development/ending editor and folds optional per-shot instructions behind an advanced disclosure. Per-shot drafts are browser-local; only the generated storyboard is saved through the library. Missing off-screen character states are completed during generation, not during validation of stored projects.
+
 Verification uses the isolated real ComfyUI check: form submission, save-and-convert progression, selected navigation, persistent primary action, existing clip snapshots and wires, Ollama lifecycle controls, languages and mobile overflow. Test output and screenshots are ignored local artifacts. No running ComfyUI job or paid AI endpoint is used.

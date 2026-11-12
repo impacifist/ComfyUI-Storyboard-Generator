@@ -17,6 +17,8 @@ Done when: real ComfyUI opens the panel, the embedded Studio works, clips become
 - `panel/bridge.js`: same-origin iframe bridge. Only conversion IDs, project IDs and UI language are passed between frames; never keys. API and asset paths are namespaced when serving upstream assets; the snapshot files are not modified.
 - `web/storyboard.js`: action-bar/menu entrypoint, persistent native dialog, clip version picker, search, selection, node creation and explicit updates.
 - `panel/workbench.js`, `panel/studio.css`: ComfyUI-only layout adapter, unified navigation synchronization, input/output layout, form-associated fixed action bar and explicit save-and-convert flow. Display changes do not modify the pinned engine. See [design notes](DESIGN_COMFYUI.md).
+- `panel/direction.js`: ComfyUI-only direction editor. Presents one story development/ending field and optional per-shot instructions, then adds those instructions to the next generation request. Drafts stay in browser storage; saved project JSON remains the pinned schema.
+- `state_repair.py`: generation-only adapter for large casts. When the model omits off-screen character state entries, fills them from the previous shot or a neutral off-screen state before strict vendor validation. Stored documents and direct validation remain strict.
 - `clip_snapshot.py`: strict, versioned, credential-free snapshot schema with identity and checksum.
 - `nodes.py`: deterministic STRING/FLOAT/STRING outputs. No database or provider access during execution.
 
