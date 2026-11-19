@@ -29,10 +29,15 @@
       "人物の間で何が起こり、場面が終わったとき何が変わっているでしょうか？"
     ],
     advanced: ["컷별 연출 지시 · 고급", "Per-shot direction · advanced", "カット別演出指示・詳細"],
+    repairNotice: [
+      "검증 오류를 1회 보완해 콘티를 저장했습니다. 보완 내역은 생성 출처에서 확인할 수 있습니다.",
+      "The storyboard was repaired once and saved. Repair details are listed in its generation notes.",
+      "検証エラーを1回修正して保存しました。修正内容は生成情報で確認できます。"
+    ],
     advancedHelp: [
-      "원하는 컷만 채우면 됩니다. 비워둔 컷은 AI가 자동으로 구성합니다. 이 지시는 다음 생성과 재생성에 반영됩니다. 인물이 많을 때 일부 컷에서 화면 밖 인물 상태가 빠지면 이전 컷 기준으로 자동 보완되며, 실제 등장은 화면·행동 설명을 따릅니다.",
-      "Fill only the shots you want to control. Empty shots are composed by the AI. These notes apply to the next generation or regeneration. If off-screen character states are missing with a large cast, they are completed from the previous shot; on-screen appearance still follows the visual and actions.",
-      "指示したいカットだけ入力してください。空のカットはAIが構成します。この指示は次の生成・再生成に反映されます。人物が多いとき画面外の人物状態が欠けても前のカットを基準に補完され、実際の登場は画面・行動の説明に従います。"
+      "원하는 컷만 채우면 됩니다. 비워둔 컷은 AI가 자동으로 구성합니다. 검증 오류가 남으면 기존 초안을 바탕으로 최대 1회 보완 요청하며 추가 API 사용이 발생합니다. 연결·시간 초과는 재시도하지 않습니다. 인물이 많은 컷의 화면 밖 상태는 이전 컷을 기준으로 보완됩니다.",
+      "Fill only the shots you want to control. Empty shots are composed by the AI. If validation fails, one repair request is made from the existing draft and uses additional API calls. Connection and timeout failures are not retried. Missing off-screen cast states are carried forward.",
+      "指示したいカットだけ入力してください。空のカットはAIが構成します。検証に失敗した場合、既存の草案を基に最大1回修正を依頼し、API使用量が増えることがあります。接続・タイムアウトは再試行しません。画面外の人物状態は前のカットを基準に補完します。"
     ],
     shotPlaceholder: [
       "이 컷에서 원하는 내용",
@@ -215,6 +220,14 @@
     notes = readNotes(notesTitle);
     renderNotes();
     return result;
+  };
+
+  const previousUseGeneratedResult = useGeneratedResult;
+  useGeneratedResult = async function(result, provider) {
+    await previousUseGeneratedResult(result, provider);
+    const repaired = result?.document?.story?.assumptions?.some(
+      (item) => typeof item === "string" && item.startsWith("AI 출력 검증 오류 1회 보완:"));
+    if (repaired && !dirty) notice(text("repairNotice"));
   };
 
   const previousValidate = validateBriefInputs;

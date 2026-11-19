@@ -12,6 +12,7 @@ Done when: real ComfyUI opens the panel, the embedded Studio works, clips become
 
 - `_vendor/`: unmodified upstream engine, guides, example and Studio assets pinned by commit and per-file checksum.
 - `service.py`: invokes that engine with separate library/settings roots and a process-wide nonblocking AI/settings lock.
+- `generation_adapter.py`: ComfyUI-only, generation-scoped correction of parsed STORY/outline outputs that fail validation. At most one extra model call per generation; transport failures are not retried and invalid drafts are never saved.
 - `ollama_memory.py`: sends a bounded local unload request for one selected model; `service.py` owns the lifecycle after a complete, saved conversion. Release status is separate from saved prompt data. No LLM request is added to node execution. `panel/bridge.js` owns the persisted checkbox and manual action, outside the unmodified snapshot. See [Ollama memory release](OLLAMA_MEMORY.md).
 - `routes.py`: aiohttp routes on ComfyUI's existing server under `/storyboard-generator`, loopback/same-origin guards, bounded JSON requests, redacted errors and worker-thread execution for blocking engine calls.
 - `panel/bridge.js`: same-origin iframe bridge. Only conversion IDs, project IDs and UI language are passed between frames; never keys. API and asset paths are namespaced when serving upstream assets; the snapshot files are not modified.

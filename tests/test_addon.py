@@ -8,7 +8,7 @@ from pathlib import Path
 from unittest.mock import patch
 
 from support import ROOT, direction_output, document, fake_ai, service
-from storyboard_addon import clip_snapshot, nodes, state_repair
+from storyboard_addon import clip_snapshot, generation_adapter, nodes, state_repair
 
 
 class AddonTests(unittest.TestCase):
@@ -217,6 +217,72 @@ class AddonTests(unittest.TestCase):
             self.assertTrue(all(all(value.strip() for value in state.values()) for state in states))
         self.assertTrue(any(assumption.startswith(state_repair.NOTE_PREFIX)
                             for assumption in result["document"]["story"]["assumptions"]))
+
+    def test_parsed_story_validation_error_is_repaired_once(self):
+        brief = copy.deepcopy(self.document["brief"])
+        invalid = service.engine.demo_story(brief)
+        invalid["shots"][0]["dialogue"][0]["speaker"] = "unknown_speaker"
+        corrected = service.engine.demo_story(brief)
+        calls = []
+
+        def generate(provider, model, system, user, schema):
+            request = json.loads(user)
+            calls.append(request)
+            if len(calls) == 1:
+                return invalid
+            self.assertIn("화자 참조", request["repair"]["validation_errors"][0])
+            self.assertEqual(request["repair"]["previous_output"]["shots"][0]["dialogue"][0]["speaker"],
+                             "unknown_speaker")
+            return corrected
+
+        with patch.object(generation_adapter, "ORIGINAL_GENERATE_JSON", side_effect=generate):
+            result = service.dispatch("/generate", {"brief": brief, "provider": "openai", "model": "mock"})
+
+        self.assertEqual(len(calls), 2)
+        self.assertEqual(result["document"]["story"]["shots"][0]["dialogue"][0]["speaker"],
+                         brief["characters"][0]["id"])
+        self.assertTrue(any(item.startswith(generation_adapter.REPAIR_NOTE_PREFIX)
+                            for item in result["document"]["story"]["assumptions"]))
+
+    def test_generation_repair_does_not_retry_transport_failure(self):
+        brief = copy.deepcopy(self.document["brief"])
+        with patch.object(generation_adapter, "ORIGINAL_GENERATE_JSON",
+                          side_effect=service.providers.ProviderError("mock timeout")) as generate:
+            with self.assertRaisesRegex(service.providers.ProviderError, "mock timeout"):
+                service.dispatch("/generate", {"brief": brief, "provider": "openai", "model": "mock"})
+        generate.assert_called_once()
+
+    def test_batch_speaker_error_is_repaired_once_without_restarting_other_batches(self):
+        brief = copy.deepcopy(self.document["brief"])
+        brief.update(shot_count=13, duration=39)
+        planned_story = service.engine.demo_story(brief)
+        calls = []
+
+        def generate(provider, model, system, user, schema):
+            request = json.loads(user)
+            calls.append(request)
+            if request.get("task") == "storyboard_outline":
+                return {**{key: planned_story[key] for key in ("summary", "beats", "assumptions")},
+                        "shots": [{**{key: shot[key] for key in ("id", "scene_id", "duration", "purpose")},
+                                   "action": " / ".join(shot["actions"])} for shot in planned_story["shots"]]}
+            ids = request["batch"]["shot_ids"]
+            result = copy.deepcopy(planned_story)
+            result["shots"] = [shot for shot in result["shots"] if shot["id"] in ids]
+            if ids[0] == "S01" and "repair" not in request:
+                result["shots"][0]["dialogue"][0]["speaker"] = "unknown_speaker"
+            return result
+
+        with patch.object(generation_adapter, "ORIGINAL_GENERATE_JSON", side_effect=generate):
+            result = service.dispatch("/generate", {"brief": brief, "provider": "openai", "model": "mock"})
+
+        self.assertEqual(len(calls), 5)
+        repair = calls[2]["repair"]
+        self.assertIn("화자 참조", repair["validation_errors"][0])
+        self.assertEqual(repair["previous_output"]["shots"][0]["dialogue"][0]["speaker"], "unknown_speaker")
+        self.assertEqual(result["document"]["story"]["shots"][0]["dialogue"][0]["speaker"],
+                         brief["characters"][0]["id"])
+        self.assertTrue(any(item.startswith(generation_adapter.REPAIR_NOTE_PREFIX)
+                            for item in result["document"]["story"]["assumptions"]))
 
     def test_direct_store_validation_still_rejects_missing_states(self):
         brief = self.five_character_brief()
